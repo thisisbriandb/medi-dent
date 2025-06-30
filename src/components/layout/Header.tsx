@@ -1,0 +1,51 @@
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
+
+export function Header() {
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo et Nom */}
+          <Link href="/" className="flex items-center gap-2">
+            <span className="font-bold text-xl">AllôDocta</span>
+          </Link>
+
+          {/* Navigation Principale */}
+          <nav className="hidden md:flex items-center gap-8">
+            <Link
+              href="/medecins"
+              className="text-gray-600 hover:text-cyan-600 transition-colors"
+            >
+              Trouver un médecin
+            </Link>
+            <Link
+              href="/rendez-vous"
+              className="text-gray-600 hover:text-cyan-600 transition-colors"
+            >
+              Mes rendez-vous
+            </Link>
+            <Link
+              href="/blog"
+              className="text-gray-600 hover:text-cyan-600 transition-colors"
+            >
+              Blog santé
+            </Link>
+          </nav>
+
+          {/* Boutons d'action */}
+          <div className="flex items-center gap-4">
+            <Link href="/login">
+              <Button variant="ghost">Se connecter</Button>
+            </Link>
+            <Link href="/register">
+              <Button className="bg-cyan-600 hover:bg-cyan-700 text-white">
+                S'inscrire
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

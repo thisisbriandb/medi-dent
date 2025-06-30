@@ -1,103 +1,150 @@
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="bg-white">
+      <main>
+        {/* Hero Section */}
+        <section className="relative min-h-screen flex items-center bg-gradient-to-br from-cyan-50 to-white">
+          <div className="container mx-auto px-4 py-20">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div className="text-left space-y-8">
+                <h1 className="text-5xl md:text-6xl font-display font-bold leading-tight text-gray-900">
+                  La solution <br />
+                  <span className="text-cyan-600">simple et sécurisée</span><br />
+                  pour vos rendez-vous médicaux
+                </h1>
+                <p className="text-xl text-gray-600 max-w-lg">
+                  Rejoignez plus de 75 000 praticiens qui font déjà confiance à notre plateforme. Créez votre compte et commencez à gérer vos rendez-vous dès aujourd'hui.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link href="/register/patient">
+                    <Button className="w-full sm:w-auto text-lg px-8 py-6 bg-cyan-600 hover:bg-cyan-700 text-white">
+                      Je suis patient
+                    </Button>
+                  </Link>
+                  <Link href="/register/medecin">
+                    <Button variant="outline" className="w-full sm:w-auto text-lg px-8 py-6 border-2">
+                      Je suis médecin
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              <div className="relative hidden md:block">
+                <div className="relative w-full h-[600px] rounded-2xl overflow-hidden shadow-2xl">
+                  <Image 
+                    src="/doctor-consultation.jpg" 
+                    alt="Consultation médicale" 
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+                {/* Floating Card */}
+                <div className="absolute -right-12 top-1/4 bg-white p-6 rounded-xl shadow-lg max-w-xs">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-12 h-12 bg-cyan-100 rounded-full flex items-center justify-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">Prise de RDV rapide</h3>
+                      <p className="text-sm text-gray-500">En moins de 2 minutes</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
+        {/* Stats Section */}
+        <section className="py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="p-6">
+                <h3 className="text-4xl font-display font-bold text-cyan-600 mb-2">75 000+</h3>
+                <p className="text-gray-600">Praticiens nous font confiance</p>
+              </div>
+              <div className="p-6">
+                <h3 className="text-4xl font-display font-bold text-cyan-600 mb-2">1M+</h3>
+                <p className="text-gray-600">Rendez-vous pris par mois</p>
+              </div>
+              <div className="p-6">
+                <h3 className="text-4xl font-display font-bold text-cyan-600 mb-2">98%</h3>
+                <p className="text-gray-600">Taux de satisfaction</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Features Section */}
+        <section className="py-20 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-center mb-16">Comment ça marche ?</h2>
+            <div className="grid md:grid-cols-3 gap-12">
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto">
+                  <Image src="/file.svg" alt="Rechercher" width={32} height={32} />
+                </div>
+                <h3 className="text-xl font-semibold">Trouvez un praticien</h3>
+                <p className="text-gray-600">Recherchez parmi des milliers de spécialistes qualifiés près de chez vous.</p>
+              </div>
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto">
+                  <Image src="/window.svg" alt="Rendez-vous" width={32} height={32} />
+                </div>
+                <h3 className="text-xl font-semibold">Prenez rendez-vous</h3>
+                <p className="text-gray-600">Sélectionnez un créneau disponible et réservez en quelques clics.</p>
+              </div>
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-cyan-100 rounded-full flex items-center justify-center mx-auto">
+                  <Image src="/globe.svg" alt="Dossier Médical" width={32} height={32} />
+                </div>
+                <h3 className="text-xl font-semibold">Gérez votre santé</h3>
+                <p className="text-gray-600">Accédez à votre historique et vos documents médicaux en toute sécurité.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="py-20 bg-white">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-center mb-16">Ce que disent nos utilisateurs</h2>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="bg-gray-50 p-8 rounded-2xl">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 bg-cyan-100 rounded-full"></div>
+                  <div>
+                    <h4 className="font-semibold">Dr. Marie Laurent</h4>
+                    <p className="text-gray-600">Médecin généraliste</p>
+                  </div>
+                </div>
+                <p className="text-gray-600">
+                  "Allodocta m'a permis de mieux gérer mon agenda et de réduire considérablement le temps consacré aux tâches administratives. Mes patients apprécient la simplicité de prise de rendez-vous."
+                </p>
+              </div>
+              <div className="bg-gray-50 p-8 rounded-2xl">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 bg-cyan-100 rounded-full"></div>
+                  <div>
+                    <h4 className="font-semibold">Sophie Martin</h4>
+                    <p className="text-gray-600">Patiente</p>
+                  </div>
+                </div>
+                <p className="text-gray-600">
+                  "Une plateforme intuitive qui simplifie vraiment la prise de rendez-vous médicaux. Je peux facilement trouver un spécialiste et gérer mes rendez-vous en quelques clics."
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
     </div>
   );
-}
+} 
