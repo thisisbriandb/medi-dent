@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 export function Header() {
   return (
@@ -8,8 +9,15 @@ export function Header() {
         <div className="flex items-center justify-between h-16">
           {/* Logo et Nom */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="font-bold text-xl">AllôDocta</span>
-          </Link>
+              <Image 
+                src="/logo.png" 
+                alt="Logo AllôDocta" 
+                width={48} 
+                height={48} 
+                className="rounded-xl w-12 h-12" 
+                priority
+              />
+            </Link>
 
           {/* Navigation Principale */}
           <nav className="hidden md:flex items-center gap-8">

@@ -1,20 +1,18 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState, SyntheticEvent } from "react";
+import { LoginHeader } from "@/app/components/login/Header";
+import Image from "next/image";
+import { ArrowLeft, Stethoscope, MapPin, Mail, Lock, User } from 'lucide-react';
+import AuthService from "@/app/services/AuthService";
+import { useRouter } from "next/navigation";
 
 export default function MedecinRegisterPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
@@ -40,122 +38,259 @@ export default function MedecinRegisterPage() {
       return;
     }
 
-    // TODO: Appeler l'API pour créer le compte médecin
-    console.log("Données du formulaire médecin:", formData);
+    try {
+      console.log('Début de l\'inscription...');
+      const response = await AuthService.registerMedecin({
+        nom: formData.nom,
+        prenom: formData.prenom,
+        email: formData.email,
+        mot_de_passe: formData.password,
+        specialite: formData.specialite,
+        ville: formData.ville,
+      });
+      
+      console.log('Inscription réussie, réponse:', response);
+      console.log('Token stocké:', AuthService.getToken());
+      
+      // Vérifier que le token est bien stocké et récupérer les infos utilisateur
+      if (AuthService.isAuthenticated()) {
+        console.log('Token trouvé, récupération des informations utilisateur...');
+        const user = await AuthService.getCurrentUser();
+        
+        if (user && user.role === 'medecin') {
+          console.log('Utilisateur médecin confirmé, redirection vers le dashboard...');
+          router.push('/dashboard');
+        } else {
+          console.log('Type d\'utilisateur incorrect ou non trouvé');
+          setError("Erreur lors de la vérification du compte médecin.");
+          AuthService.removeToken();
+          router.push('/login');
+        }
+      } else {
+        console.log('Token non trouvé, redirection vers login...');
+        setError("Erreur lors de l'authentification.");
+        router.push('/login');
+      }
+    } catch (err: any) {
+      console.error('Erreur d\'inscription:', err);
+      setError(err.response?.data?.message || "Une erreur est survenue lors de l'inscription.");
+    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
-        <form onSubmit={handleSubmit}>
-          <CardHeader>
-            <CardTitle className="text-2xl">Inscription Praticien</CardTitle>
-            <CardDescription>
-              Créez votre compte praticien pour gérer vos rendez-vous et vos patients
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="prenom">Prénom</Label>
-                <Input
-                  id="prenom"
-                  placeholder="Marie"
-                  required
-                  value={formData.prenom}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="nom">Nom</Label>
-                <Input
-                  id="nom"
-                  placeholder="Curie"
-                  required
-                  value={formData.nom}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="specialite">Spécialité</Label>
-              <Input
-                id="specialite"
-                placeholder="Cardiologie"
-                required
-                value={formData.specialite}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="ville">Ville d'exercice</Label>
-              <Input
-                id="ville"
-                placeholder="Paris"
-                required
-                value={formData.ville}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="marie.curie@example.com"
-                required
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-            </div>
-
-            {error && (
-              <div className="text-red-500 text-sm">{error}</div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full">
-              Créer mon compte
-            </Button>
-            <div className="text-sm text-center space-y-2">
-              <Link href="/register" className="text-cyan-600 hover:underline block">
+    <>
+      <LoginHeader />
+      <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
+        {/* Formulaire */}
+        <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white">
+          <div className="max-w-md w-full space-y-8">
+            <div className="text-center">
+              <Link 
+                href="/register" 
+                className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-8"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
                 Retour à la sélection
               </Link>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-2">
+                Inscription Médecin
+              </h1>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+              <div className="space-y-6 bg-white">
+                {/* Nom et Prénom */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <Label htmlFor="prenom" className="text-gray-700">
+                      Prénom
+                    </Label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="prenom"
+                        placeholder="Marie"
+                        required
+                        value={formData.prenom}
+                        onChange={handleChange}
+                        className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <Label htmlFor="nom" className="text-gray-700">
+                      Nom
+                    </Label>
+                    <div className="mt-1 relative rounded-md shadow-sm">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <User className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="nom"
+                        placeholder="Curie"
+                        required
+                        value={formData.nom}
+                        onChange={handleChange}
+                        className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Spécialité */}
+                <div className="relative">
+                  <Label htmlFor="specialite" className="text-gray-700">
+                    Spécialité
+                  </Label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Stethoscope className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <Input
+                      id="specialite"
+                      placeholder="Cardiologie"
+                      required
+                      value={formData.specialite}
+                      onChange={handleChange}
+                      className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Ville */}
+                <div className="relative">
+                  <Label htmlFor="ville" className="text-gray-700">
+                    Ville d'exercice
+                  </Label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <MapPin className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <Input
+                      id="ville"
+                      placeholder="Paris"
+                      required
+                      value={formData.ville}
+                      onChange={handleChange}
+                      className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div className="relative">
+                  <Label htmlFor="email" className="text-gray-700">
+                    Email
+                  </Label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Mail className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="marie.curie@example.com"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Mot de passe */}
+                <div className="relative">
+                  <Label htmlFor="password" className="text-gray-700">
+                    Mot de passe
+                  </Label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      required
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Confirmer mot de passe */}
+                <div className="relative">
+                  <Label htmlFor="confirmPassword" className="text-gray-700">
+                    Confirmer le mot de passe
+                  </Label>
+                  <div className="mt-1 relative rounded-md shadow-sm">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Lock className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      required
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md">
+                  {error}
+                </div>
+              )}
+
               <div>
-                Déjà inscrit ?{" "}
-                <Link href="/login" className="text-cyan-600 hover:underline">
+                <Button
+                  type="submit"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition-colors"
+                >
+                  Créer mon compte
+                </Button>
+              </div>
+
+              <div className="text-center text-gray-600">
+                Déjà inscrit?{" "}
+                <Link href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
                   Se connecter
                 </Link>
               </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Image de fond */}
+        <div className="hidden lg:block relative bg-gradient-to-br from-blue-500 to-blue-700 overflow-hidden">
+          <div className="absolute inset-0 bg-black/20 z-10"></div>
+          <div className="absolute inset-0">
+            <Image
+                src="/photo1.jpg"
+                alt="Image de médecin"
+                fill
+                priority
+                className="object-cover"
+                sizes="50vw"
+              />
+          </div>
+          <div className="absolute inset-0 z-20 flex items-center justify-center p-12">
+            <div className="max-w-xl text-center text-white">
+              <h2 className="text-4xl font-bold mb-6">
+                Bienvenue sur AllôDocta
+              </h2>
+              <p className="text-xl opacity-90">
+                Rejoignez notre communauté de professionnels de santé et offrez à vos patients une expérience de consultation moderne et efficace.
+              </p>
             </div>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+          </div>
+        </div>
+      </div>
+    </>
   );
 }

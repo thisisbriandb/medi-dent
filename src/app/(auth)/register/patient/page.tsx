@@ -1,29 +1,34 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState, SyntheticEvent } from "react";
+import { LoginHeader } from "@/app/components/login/Header";
+import Image from "next/image";
+import { ArrowLeft, User, Mail, Lock, Phone, MapPin, Calendar } from 'lucide-react';
+import { useAuth } from "@/contexts/AuthContext";
+import { RegisterPatientData } from "@/app/services/AuthService";
+import { useRouter } from "next/navigation";
 
 export default function PatientRegisterPage() {
-  const [formData, setFormData] = useState({
+  const { registerPatient } = useAuth();
+  const router = useRouter();
+  
+  const [formData, setFormData] = useState<Omit<RegisterPatientData, 'mot_de_passe'> & { password: '', confirmPassword: ''}>({
     nom: "",
     prenom: "",
     email: "",
     password: "",
     confirmPassword: "",
+    date_naissance: "",
+    telephone: "",
+    adresse: "",
   });
 
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
@@ -32,106 +37,147 @@ export default function PatientRegisterPage() {
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
 
     if (formData.password !== formData.confirmPassword) {
       setError("Les mots de passe ne correspondent pas.");
+      setLoading(false);
       return;
     }
 
-    // TODO: Appeler l'API pour créer le compte patient
-    console.log("Données du formulaire patient:", formData);
+    try {
+      await registerPatient({
+        nom: formData.nom,
+        prenom: formData.prenom,
+        email: formData.email,
+        mot_de_passe: formData.password,
+        date_naissance: formData.date_naissance,
+        telephone: formData.telephone,
+        adresse: formData.adresse,
+      });
+      router.push('/login');
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Une erreur est survenue lors de l'inscription.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
-      <Card className="w-full max-w-md">
-        <form onSubmit={handleSubmit}>
-          <CardHeader>
-            <CardTitle className="text-2xl">Inscription Patient</CardTitle>
-            <CardDescription>
-              Créez votre compte patient pour accéder à tous nos services
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+    <>
+      <LoginHeader />
+      <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
+        {/* Formulaire */}
+        <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white">
+          <div className="max-w-md w-full space-y-8">
+            <div className="text-center">
+              <Link 
+                href="/register" 
+                className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-8"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Retour à la sélection
+              </Link>
+              <h1 className="text-2xl font-bold tracking-tight text-gray-900 mb-2">
+                Inscription Patient
+              </h1>
+            </div>
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="prenom">Prénom</Label>
-                <Input
-                  id="prenom"
-                  placeholder="Jean"
-                  required
-                  value={formData.prenom}
-                  onChange={handleChange}
-                />
+                  <InputWithIcon icon={User} id="prenom" placeholder="Jean" required value={formData.prenom} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nom">Nom</Label>
+                  <InputWithIcon icon={User} id="nom" placeholder="Dupont" required value={formData.nom} onChange={handleChange} />
+                </div>
               </div>
+
               <div className="space-y-2">
-                <Label htmlFor="nom">Nom</Label>
-                <Input
-                  id="nom"
-                  placeholder="Dupont"
-                  required
-                  value={formData.nom}
-                  onChange={handleChange}
-                />
+                <Label htmlFor="date_naissance">Date de naissance</Label>
+                <InputWithIcon icon={Calendar} id="date_naissance" type="date" required value={formData.date_naissance} onChange={handleChange} />
               </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="adresse">Adresse</Label>
+                <InputWithIcon icon={MapPin} id="adresse" placeholder="123 Rue de la Paix, 75001 Paris" required value={formData.adresse} onChange={handleChange} />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="telephone">Téléphone</Label>
+                <InputWithIcon icon={Phone} id="telephone" placeholder="06 12 34 56 78" required value={formData.telephone} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="jean.dupont@example.com"
-                required
-                value={formData.email}
-                onChange={handleChange}
-              />
+                <InputWithIcon icon={Mail} id="email" type="email" placeholder="jean.dupont@example.com" required value={formData.email} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">Mot de passe</Label>
-              <Input
-                id="password"
-                type="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-              />
+                <InputWithIcon icon={Lock} id="password" type="password" required value={formData.password} onChange={handleChange} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                required
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
+                <InputWithIcon icon={Lock} id="confirmPassword" type="password" required value={formData.confirmPassword} onChange={handleChange} />
             </div>
 
-            {error && (
-              <div className="text-red-500 text-sm">{error}</div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full">
-              Créer mon compte
+              {error && <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-md">{error}</div>}
+
+              <div className="pt-4">
+                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
+                  {loading ? 'Création en cours...' : 'Créer mon compte'}
             </Button>
-            <div className="text-sm text-center space-y-2">
-              <Link href="/register" className="text-cyan-600 hover:underline block">
-                Retour à la sélection
-              </Link>
-              <div>
-                Déjà inscrit ?{" "}
-                <Link href="/login" className="text-cyan-600 hover:underline">
+              </div>
+
+              <div className="text-center text-gray-600">
+                Déjà un compte ?{" "}
+                <Link href="/login" className="text-blue-600 hover:text-blue-800 font-medium">
                   Se connecter
                 </Link>
               </div>
+            </form>
+          </div>
+        </div>
+
+        {/* Image de fond */}
+        <div className="hidden lg:block relative bg-gradient-to-br from-blue-500 to-blue-700 overflow-hidden">
+           <div className="absolute inset-0 bg-black/20 z-10"></div>
+           <div className="absolute inset-0">
+             <Image
+                 src="/doctor-consultation.jpg"
+                 alt="Consultation médicale"
+                 fill
+                 priority
+                 className="object-cover"
+                 sizes="50vw"
+               />
+           </div>
+           <div className="absolute inset-0 z-20 flex items-center justify-center p-12">
+             <div className="max-w-xl text-center text-white">
+               <h2 className="text-4xl font-bold mb-6">
+                 Votre santé, notre priorité
+               </h2>
+               <p className="text-xl opacity-90">
+                 Accédez à vos consultations et gérez vos rendez-vous en toute simplicité.
+               </p>
+             </div>
+              </div>
             </div>
-          </CardFooter>
-        </form>
-      </Card>
     </div>
+    </>
   );
 }
+
+// Composant utilitaire pour les inputs avec icône
+const InputWithIcon = ({ icon: Icon, ...props }: { icon: React.ElementType; [key: string]: any; }) => (
+    <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Icon className="h-5 w-5 text-gray-400" />
+        </div>
+        <Input {...props} className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"/>
+    </div>
+);

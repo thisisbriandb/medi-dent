@@ -9,8 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['ClashDisplay-Variable', 'ClashDisplay-Regular', 'sans-serif'],
-        display: ['ClashDisplay-Variable', 'ClashDisplay-Bold', 'sans-serif'],
+        clash: ['ClashDisplay', 'sans-serif'],
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+          '50%': { transform: 'translateY(-20px) rotate(5deg)' },
+        }
+      },
+      animation: {
+        'float': 'float 6s ease-in-out infinite',
       },
     },
   },

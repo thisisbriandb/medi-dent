@@ -1,6 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Header, Footer } from "@/components/layout";
+import "./clash-display.css";
+import "flatpickr/dist/themes/light.css"
+import "flatpickr/dist/flatpickr.css"
+import { AuthProvider } from '@/contexts/AuthContext';
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Allodocta",
@@ -13,12 +19,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
-      <body>
-        <Header />
-        <main className="min-h-screen pt-16">
+    <html lang="fr" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+        <AuthProvider>
           {children}
-        </main>
+      
+        </AuthProvider>
       </body>
     </html>
   );
