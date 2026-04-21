@@ -7,6 +7,7 @@ import {
   LayoutDashboard, 
   Calendar, 
   UserCircle, 
+  Users,
   ClipboardList, 
   FileText, 
   Table, 
@@ -31,9 +32,9 @@ const Sidebar = () => {
           href: '/dashboard'
         },
         {
-          label: 'Calendrier',
+          label: 'Agenda',
           icon: <Calendar className="w-5 h-5" />,
-          href: '/calendar'
+          href: '/appointments'
         },
         {
           label: 'Profil',
@@ -45,6 +46,11 @@ const Sidebar = () => {
     {
       title: 'GESTION',
       items: [
+        {
+          label: 'Patients',
+          icon: <Users className="w-5 h-5" />,
+          href: '/patients'
+        },
         {
           label: 'Consultation',
           icon: <ClipboardList className="w-5 h-5" />,

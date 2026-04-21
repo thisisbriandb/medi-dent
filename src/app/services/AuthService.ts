@@ -79,7 +79,7 @@ const AuthService = {
         )
       `)
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('Erreur récupération profil:', error.message);

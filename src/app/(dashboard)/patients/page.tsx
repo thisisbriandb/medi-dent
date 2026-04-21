@@ -2,59 +2,62 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
-import ConsultationService from '@/app/services/ConsultationService';
-import type { Consultation, ConsultationFilters } from '@/types/consultation.types';
+import { Search, Plus, ChevronLeft, ChevronRight, Filter, UserCheck, UserX } from 'lucide-react';
+import PatientSupabaseService from '@/app/services/PatientSupabaseService';
+import type { Patient, PatientFilters } from '@/types/patient.types';
 
 const LIMIT = 20;
 
-function formatDateTime(dateStr: string | null | undefined) {
-  if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-export default function ConsultationPage() {
+export default function PatientsPage() {
   const router = useRouter();
-  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [filters, setFilters] = useState<ConsultationFilters>({
+  const [filters, setFilters] = useState<PatientFilters>({
     search: '',
+    est_actif: undefined,
     page: 1,
     limit: LIMIT,
   });
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  const fetchData = useCallback(async () => {
+  const fetchPatients = useCallback(async () => {
     setIsLoading(true);
     try {
-      const result = await ConsultationService.getAll(filters);
-      setConsultations(result.data);
+      const result = await PatientSupabaseService.getAll(filters);
+      setPatients(result.data);
       setTotal(result.total);
     } catch (err) {
-      console.error('Erreur chargement consultations:', err);
+      console.error('Erreur chargement patients:', err);
     } finally {
       setIsLoading(false);
     }
   }, [filters]);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchPatients();
+  }, [fetchPatients]);
 
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value, page: 1 }));
   };
 
+  const handleFilterActif = (value: boolean | undefined) => {
+    setFilters((prev) => ({ ...prev, est_actif: value, page: 1 }));
+  };
+
   const handlePageChange = (page: number) => {
     setFilters((prev) => ({ ...prev, page }));
+  };
+
+  const formatDate = (dateStr: string | null) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
   };
 
   return (
@@ -62,47 +65,70 @@ export default function ConsultationPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Consultations</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Patients</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {total} consultation{total !== 1 ? 's' : ''}
+            {total} patient{total !== 1 ? 's' : ''} enregistré{total !== 1 ? 's' : ''}
           </p>
         </div>
         <button
-          onClick={() => router.push('/consultation/nouvelle')}
+          onClick={() => router.push('/patients/nouveau')}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Nouvelle consultation
+          Nouveau patient
         </button>
       </div>
 
       {/* Filtres */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
         <div className="flex flex-col sm:flex-row gap-3">
+          {/* Recherche */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Rechercher par motif ou notes..."
+              placeholder="Rechercher par nom, prénom, téléphone ou n° dossier..."
               value={filters.search}
               onChange={(e) => handleSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </div>
+
+          {/* Filtre statut */}
           <div className="flex items-center gap-2">
-            <input
-              type="date"
-              value={filters.date_from || ''}
-              onChange={(e) => setFilters((prev) => ({ ...prev, date_from: e.target.value || undefined, page: 1 }))}
-              className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-            <span className="text-gray-400 text-sm">à</span>
-            <input
-              type="date"
-              value={filters.date_to || ''}
-              onChange={(e) => setFilters((prev) => ({ ...prev, date_to: e.target.value || undefined, page: 1 }))}
-              className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
+            <Filter className="w-4 h-4 text-gray-400" />
+            <button
+              onClick={() => handleFilterActif(undefined)}
+              className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                filters.est_actif === undefined
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              Tous
+            </button>
+            <button
+              onClick={() => handleFilterActif(true)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+                filters.est_actif === true
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <UserCheck className="w-3.5 h-3.5" />
+              Actifs
+            </button>
+            <button
+              onClick={() => handleFilterActif(false)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+                filters.est_actif === false
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              <UserX className="w-3.5 h-3.5" />
+              Inactifs
+            </button>
           </div>
         </div>
       </div>
@@ -113,66 +139,79 @@ export default function ConsultationPage() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600" />
           </div>
-        ) : consultations.length === 0 ? (
+        ) : patients.length === 0 ? (
           <div className="text-center py-20">
-            <Calendar className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-            <p className="text-gray-400 text-sm">Aucune consultation trouvée</p>
+            <p className="text-gray-400 text-sm">Aucun patient trouvé</p>
           </div>
         ) : (
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
-                  Date
+                  N° Dossier
                 </th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
                   Patient
                 </th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4 hidden md:table-cell">
-                  Motif
+                  Téléphone
                 </th>
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4 hidden lg:table-cell">
-                  Praticien
+                  Dernière visite
+                </th>
+                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                  Statut
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {consultations.map((c) => (
+              {patients.map((patient) => (
                 <tr
-                  key={c.id}
-                  onClick={() => router.push(`/consultation/${c.id}`)}
+                  key={patient.id}
+                  onClick={() => router.push(`/patients/${patient.id}`)}
                   className="hover:bg-gray-50 cursor-pointer transition-colors"
                 >
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-600">
-                      {formatDateTime(c.date_consultation)}
+                    <span className="text-sm font-mono text-gray-500">
+                      {patient.numero_dossier}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-medium text-gray-600">
-                          {c.patient?.prenom?.[0]}{c.patient?.nom?.[0]}
+                      <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-medium text-gray-600">
+                          {patient.prenom?.[0]}{patient.nom?.[0]}
                         </span>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {c.patient?.prenom} {c.patient?.nom}
+                          {patient.prenom} {patient.nom}
                         </p>
-                        <p className="text-xs text-gray-400 font-mono">
-                          {c.patient?.numero_dossier}
-                        </p>
+                        {patient.email && (
+                          <p className="text-xs text-gray-400">{patient.email}</p>
+                        )}
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 hidden md:table-cell">
-                    <span className="text-sm text-gray-600 line-clamp-1">
-                      {c.motif || '—'}
+                    <span className="text-sm text-gray-600">
+                      {patient.telephone || '—'}
                     </span>
                   </td>
                   <td className="px-6 py-4 hidden lg:table-cell">
                     <span className="text-sm text-gray-500">
-                      {c.praticien ? `Dr. ${c.praticien.prenom} ${c.praticien.nom}` : '—'}
+                      {formatDate(patient.derniere_visite)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                        patient.est_actif
+                          ? 'bg-gray-100 text-gray-700'
+                          : 'bg-gray-50 text-gray-400'
+                      }`}
+                    >
+                      {patient.est_actif ? 'Actif' : 'Inactif'}
                     </span>
                   </td>
                 </tr>
