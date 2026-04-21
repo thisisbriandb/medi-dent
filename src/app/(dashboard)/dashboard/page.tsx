@@ -1,13 +1,10 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import MedecinDashboard from '@/app/components/dashboard/MedecinDashboard';
-import PatientDashboard from '@/app/components/dashboard/PatientDashboard'; // Import du nouveau composant
 
 export default function DashboardPage() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { profil, isAuthenticated, isLoading, modeActif } = useAuth();
 
-  // On affiche un spinner tant que l'authentification n'est pas terminée
   if (isLoading || !isAuthenticated) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -16,19 +13,31 @@ export default function DashboardPage() {
     );
   }
 
-  // Aiguillage basé sur le rôle pour afficher le bon composant
-  if (user?.role === 'medecin') {
-    return <MedecinDashboard />;
-  }
-  
-  if (user?.role === 'patient') {
-    return <PatientDashboard />;
-  }
-
-  // Fallback au cas où le rôle n'est pas défini (sécurité)
   return (
-    <div className="flex items-center justify-center min-h-screen">
-       <p>Rôle utilisateur non reconnu.</p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">
+          Bonjour, Dr. {profil?.prenom} {profil?.nom}
+        </h1>
+        <p className="text-gray-500">
+          Mode actif : {modeActif === 'cabinet' ? 'Cabinet Dentaire' : 'Hôpital'}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg border p-6">
+          <p className="text-sm text-gray-500">Rôle</p>
+          <p className="text-lg font-semibold capitalize">{profil?.role?.replace('_', ' ')}</p>
+        </div>
+        <div className="bg-white rounded-lg border p-6">
+          <p className="text-sm text-gray-500">Établissement</p>
+          <p className="text-lg font-semibold">{profil?.etablissement?.nom || 'Non configuré'}</p>
+        </div>
+        <div className="bg-white rounded-lg border p-6">
+          <p className="text-sm text-gray-500">Spécialité</p>
+          <p className="text-lg font-semibold">{profil?.specialite || '—'}</p>
+        </div>
+      </div>
+      <p className="text-gray-400 text-sm">Le tableau de bord complet sera implémenté dans la prochaine phase.</p>
     </div>
   );
-} 
+}

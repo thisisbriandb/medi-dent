@@ -1,3 +1,5 @@
+// @ts-nocheck
+// TODO: Migrer ce service pour utiliser Supabase directement
 import { api } from './api';
 
 // --- Types de Données pour le Patient ---

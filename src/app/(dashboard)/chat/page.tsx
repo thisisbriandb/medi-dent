@@ -13,7 +13,7 @@ const conversations = [
   { id: 3, name: 'Support AlloDocta', lastMessage: 'Merci de nous avoir contactés.', avatar: '/logo.png', online: true },
 ];
 
-const initialMessages = {
+const initialMessages: Record<number, { from: string; text: string }[]> = {
   1: [
     { from: 'other', text: 'Bonjour! Comment allez-vous aujourd\'hui?' },
     { from: 'me', text: 'Je vais bien, merci. J\'ai une question sur mon traitement.' },

@@ -28,7 +28,7 @@ const PatientConsultation: React.FC = () => {
     const [selectedMedecin, setSelectedMedecin] = useState<Medecin | null>(null);
     const [isBookingDialogOpen, setIsBookingDialogOpen] = useState(false);
     const [creneauxDisponibles, setCreneauxDisponibles] = useState<string[]>([]);
-    const { user } = useAuth();
+    const { profil } = useAuth();
 
     // Effet pour charger les créneaux disponibles quand un médecin est sélectionné et une date choisie
     useEffect(() => {
@@ -115,12 +115,12 @@ const PatientConsultation: React.FC = () => {
 
     useEffect(() => {
         const fetchAppointments = async () => {
-            if (!user?.id) return;
+            if (!profil?.id) return;
             try {
                 const startDate = new Date();
                 const endDate = new Date();
                 endDate.setFullYear(endDate.getFullYear() + 1);
-                const response = await AppointmentService.getAppointmentsByPatient(user.id.toString(), startDate, endDate);
+                const response = await AppointmentService.getAppointmentsByPatient(profil.id.toString(), startDate, endDate);
                 
                 if (response && response.success && Array.isArray(response.data)) {
                     setAppointments(response.data);
@@ -135,7 +135,7 @@ const PatientConsultation: React.FC = () => {
         };
 
         fetchAppointments();
-    }, [user]);
+    }, [profil]);
 
     const filteredMedecins = useMemo(() => {
         return medecins.filter(medecin => {
@@ -165,11 +165,11 @@ const PatientConsultation: React.FC = () => {
 
     const handleAppointmentBooked = () => {
         // Re-fetch appointments to show the new one
-        if (user?.id) {
+        if (profil?.id) {
             const startDate = new Date();
             const endDate = new Date();
             endDate.setFullYear(endDate.getFullYear() + 1);
-            AppointmentService.getAppointmentsByPatient(user.id.toString(), startDate, endDate)
+            AppointmentService.getAppointmentsByPatient(profil.id.toString(), startDate, endDate)
                 .then((response) => {
                     if (response && response.success && Array.isArray(response.data)) {
                         setAppointments(response.data);

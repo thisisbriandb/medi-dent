@@ -5,26 +5,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState, SyntheticEvent } from "react";
-import { LoginHeader } from "@/app/components/login/Header";
 import Image from "next/image";
-import { ArrowLeft, User, Mail, Lock, Phone, MapPin, Calendar } from 'lucide-react';
+import { ArrowLeft, User, Mail, Lock, Phone } from 'lucide-react';
 import { useAuth } from "@/contexts/AuthContext";
-import { RegisterPatientData } from "@/app/services/AuthService";
 import { useRouter } from "next/navigation";
 
 export default function PatientRegisterPage() {
-  const { registerPatient } = useAuth();
+  const { register } = useAuth();
   const router = useRouter();
   
-  const [formData, setFormData] = useState<Omit<RegisterPatientData, 'mot_de_passe'> & { password: '', confirmPassword: ''}>({
+  const [formData, setFormData] = useState({
     nom: "",
     prenom: "",
     email: "",
     password: "",
     confirmPassword: "",
-    date_naissance: "",
     telephone: "",
-    adresse: "",
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -46,18 +42,17 @@ export default function PatientRegisterPage() {
     }
 
     try {
-      await registerPatient({
+      await register({
         nom: formData.nom,
         prenom: formData.prenom,
         email: formData.email,
-        mot_de_passe: formData.password,
-        date_naissance: formData.date_naissance,
+        password: formData.password,
         telephone: formData.telephone,
-        adresse: formData.adresse,
+        role: 'praticien',
       });
       router.push('/login');
     } catch (err: any) {
-      setError(err.response?.data?.message || "Une erreur est survenue lors de l'inscription.");
+      setError(err.message || "Une erreur est survenue lors de l'inscription.");
     } finally {
       setLoading(false);
     }
@@ -65,7 +60,6 @@ export default function PatientRegisterPage() {
 
   return (
     <>
-      <LoginHeader />
       <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
         {/* Formulaire */}
         <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white">
@@ -95,16 +89,6 @@ export default function PatientRegisterPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="date_naissance">Date de naissance</Label>
-                <InputWithIcon icon={Calendar} id="date_naissance" type="date" required value={formData.date_naissance} onChange={handleChange} />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="adresse">Adresse</Label>
-                <InputWithIcon icon={MapPin} id="adresse" placeholder="123 Rue de la Paix, 75001 Paris" required value={formData.adresse} onChange={handleChange} />
-              </div>
-              
               <div className="space-y-2">
                 <Label htmlFor="telephone">Téléphone</Label>
                 <InputWithIcon icon={Phone} id="telephone" placeholder="06 12 34 56 78" required value={formData.telephone} onChange={handleChange} />

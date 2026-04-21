@@ -1,217 +1,251 @@
-import { api } from './api';
+import { supabase } from '@/lib/supabase';
+import type { User as SupabaseUser } from '@supabase/supabase-js';
+
+// ─── Types ───
 
 export interface LoginCredentials {
   email: string;
-  mot_de_passe: string;
+  password: string;
 }
 
-export interface RegisterPatientData extends LoginCredentials {
-  nom: string;
-  prenom: string;
-  date_naissance: string;
-  telephone: string;
-  adresse: string;
-}
-
-export interface RegisterMedecinData extends LoginCredentials {
-  nom: string;
-  prenom: string;
-  specialite: string;
-  ville: string;
-}
-
-export interface User {
-  id: number;
-  name: string;
+export interface RegisterData {
   email: string;
-  email_verified_at: string | null;
-  role: 'medecin' | 'patient';
-  created_at: string;
-  updated_at: string;
+  password: string;
+  nom: string;
+  prenom: string;
+  role: 'admin' | 'medecin_chef' | 'praticien' | 'infirmier' | 'comptable' | 'stagiaire' | 'secretaire';
+  telephone?: string;
   specialite?: string;
-  ville?: string;
-  photo_profil?: string;
-  description?: string;
-  visio?: boolean;
+  id_etablissement?: string;
 }
+
+export interface Profil {
+  id: string;
+  id_etablissement: string | null;
+  role: 'admin' | 'medecin_chef' | 'praticien' | 'infirmier' | 'comptable' | 'stagiaire' | 'secretaire';
+  nom: string;
+  prenom: string;
+  email: string;
+  telephone: string | null;
+  photo_url: string | null;
+  specialite: string | null;
+  signature_url: string | null;
+  type_personnel: string | null;
+  est_actif: boolean;
+  etablissement?: {
+    id: string;
+    nom: string;
+    mode_actif: 'cabinet' | 'hopital';
+    devise: string;
+    taux_tva: number;
+    logo_url: string | null;
+    theme: 'clair' | 'sombre' | 'auto';
+  } | null;
+}
+
+// ─── Service ───
 
 const AuthService = {
-  setUser(user: User) {
-    // Stockage de l'objet utilisateur dans localStorage
-    localStorage.setItem('user', JSON.stringify(user));
-  },
 
-  getUser(): User | null {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) return null;
+  // ─── Session ───
 
-    try {
-      return JSON.parse(userStr);
-    } catch (error) {
-      console.error("Erreur lors de la désérialisation de l'utilisateur:", error);
-      // Supprimer les données corrompues pour éviter les erreurs futures
-      localStorage.removeItem('user');
+  async getSession() {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error('Erreur récupération session:', error.message);
       return null;
     }
+    return session;
   },
 
-  removeUser() {
-    localStorage.removeItem('user');
-  },
-
-  setToken(token: string) {
-    // Stockage dans localStorage
-    localStorage.setItem('auth_token', token);
-    
-    // Stockage dans les cookies
-    document.cookie = `auth_token=${token}; path=/; max-age=2592000`; // 30 jours
-    
-    // Configuration du header Authorization
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  },
-
-  removeToken() {
-    // Suppression du localStorage
-    localStorage.removeItem('auth_token');
-    
-    // Suppression du cookie
-    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT;';
-    
-    // Suppression du header
-    delete api.defaults.headers.common['Authorization'];
-  },
-
-  getToken() {
-    return localStorage.getItem('auth_token');
-  },
-
-  isAuthenticated() {
-    const token = this.getToken();
-    const user = this.getUser();
-    return !!token && !!user;
-  },
-
-  async getCurrentUser(): Promise<User | null> {
-    try {
-      // Endpoint pour récupérer l'utilisateur authentifié
-      const response = await api.get('/user');
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de la récupération de l\'utilisateur:', error);
-      // En cas d'erreur (token invalide, etc.), on nettoie tout
-      this.removeToken();
-      this.removeUser();
+  async getSupabaseUser(): Promise<SupabaseUser | null> {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error('Erreur récupération utilisateur Supabase:', error.message);
       return null;
     }
+    return user;
   },
 
-  async getMedecinProfile(userId: number): Promise<User | null> {
-    try {
-      const response = await api.get(`/medecins/${userId}`);
-      // La réponse de l'API est { success: true, data: { ... } }
-      // On retourne donc la propriété `data` qui contient le profil.
-      return response.data.data;
-    } catch (error) {
-      console.error(`Erreur lors de la récupération du profil du médecin (user_id: ${userId}):`, error);
-      throw error;
+  // ─── Profil (table profils) ───
+
+  async getProfil(userId: string): Promise<Profil | null> {
+    const { data, error } = await supabase
+      .from('profils')
+      .select(`
+        *,
+        etablissement:etablissements (
+          id, nom, mode_actif, devise, taux_tva, logo_url, theme
+        )
+      `)
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Erreur récupération profil:', error.message);
+      return null;
     }
+    return data as Profil;
   },
 
-  async loginPatient(credentials: LoginCredentials) {
-    const response = await api.post('/auth/login/patient', credentials);
-    if (response.data.token) {
-      this.setToken(response.data.token);
-      const user = await this.getCurrentUser();
-      if (user) {
-        this.setUser(user);
-        return { token: response.data.token, user };
-      }
-    }
-    throw new Error("La connexion a échoué : utilisateur non trouvé après l'obtention du token.");
+  async getCurrentProfil(): Promise<Profil | null> {
+    const user = await this.getSupabaseUser();
+    if (!user) return null;
+    return this.getProfil(user.id);
   },
 
-  async loginMedecin(credentials: LoginCredentials) {
-    const response = await api.post('/auth/login/medecin', credentials);
-    if (response.data.token) {
-      this.setToken(response.data.token);
-      const user = await this.getCurrentUser();
-      if (user) {
-        this.setUser(user);
-        return { token: response.data.token, user };
-      }
-    }
-    throw new Error("La connexion a échoué : utilisateur non trouvé après l'obtention du token.");
-  },
+  // ─── Login ───
 
-  async registerPatient(data: RegisterPatientData) {
-    const response = await api.post('/auth/register/patient', data);
-    if (response.data.token) {
-      this.setToken(response.data.token);
-      const user = await this.getCurrentUser();
-      if (user) {
-        this.setUser(user);
-        return { token: response.data.token, user };
-      }
-    }
-    throw new Error("L'inscription a échoué : utilisateur non trouvé après l'obtention du token.");
-  },
-
-  async registerMedecin(data: RegisterMedecinData) {
-    const response = await api.post('/auth/register/medecin', data);
-    if (response.data.token) {
-      this.setToken(response.data.token);
-      const user = await this.getCurrentUser();
-      if (user) {
-        this.setUser(user);
-        return { token: response.data.token, user };
-      }
-    }
-    throw new Error("L'inscription a échoué : utilisateur non trouvé après l'obtention du token.");
-  },
-
-  async logout() {
-    try {
-      await api.post('/auth/logout');
-    } finally {
-      this.removeToken();
-      this.removeUser(); // Nettoyage complet
-    }
-  },
-
-  async updateUserProfile(data: { [key: string]: any }) {
-    const formData = new FormData();
-
-    // Ajoute le _method spoofing pour que Laravel traite la requête POST comme un PUT/PATCH
-    formData.append('_method', 'PUT'); 
-
-    Object.keys(data).forEach(key => {
-      const value = data[key];
-      if (value === null || value === undefined) {
-        return; // Ne pas ajouter les champs vides
-      }
-      
-      if (value instanceof File) {
-        formData.append(key, value);
-      } else if (typeof value === 'boolean') {
-        formData.append(key, value ? '1' : '0');
-      } else if (typeof value !== 'object') {
-        formData.append(key, value);
-      }
+  async login(credentials: LoginCredentials): Promise<{ profil: Profil }> {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password,
     });
 
-    try {
-      // L'endpoint est /user/profile, la requête est POST mais traitée comme PATCH/PUT grâce à _method
-      const response = await api.post(`/medecins/${data.id}`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    const profil = await this.getProfil(data.user.id);
+    if (!profil) {
+      throw new Error('Profil utilisateur introuvable. Contactez l\'administrateur.');
+    }
+
+    // Mise à jour dernière connexion
+    await supabase
+      .from('profils')
+      .update({ derniere_connexion: new Date().toISOString() })
+      .eq('id', data.user.id);
+
+    return { profil };
+  },
+
+  // ─── Register ───
+
+  async register(data: RegisterData): Promise<{ profil: Profil }> {
+    // 1. Créer le compte Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+    });
+
+    if (authError) {
+      throw new Error(authError.message);
+    }
+
+    if (!authData.user) {
+      throw new Error('Erreur lors de la création du compte.');
+    }
+
+    // 2. Créer le profil dans la table profils
+    const { error: profilError } = await supabase
+      .from('profils')
+      .insert({
+        id: authData.user.id,
+        nom: data.nom,
+        prenom: data.prenom,
+        role: data.role,
+        email: data.email,
+        telephone: data.telephone || null,
+        specialite: data.specialite || null,
+        id_etablissement: data.id_etablissement || null,
       });
-      return response.data;
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour du profil:', error);
+
+    if (profilError) {
+      console.error('Erreur création profil:', profilError.message);
+      throw new Error('Compte créé mais le profil n\'a pas pu être enregistré: ' + profilError.message);
+    }
+
+    // 3. Récupérer le profil complet
+    const profil = await this.getProfil(authData.user.id);
+    if (!profil) {
+      throw new Error('Profil créé mais introuvable.');
+    }
+
+    return { profil };
+  },
+
+  // ─── Logout ───
+
+  async logout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('Erreur déconnexion:', error.message);
       throw error;
     }
-  }
+  },
+
+  // ─── Mise à jour profil ───
+
+  async updateProfil(userId: string, updates: Partial<Profil>): Promise<Profil> {
+    const { data, error } = await supabase
+      .from('profils')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', userId)
+      .select(`
+        *,
+        etablissement:etablissements (
+          id, nom, mode_actif, devise, taux_tva, logo_url, theme
+        )
+      `)
+      .single();
+
+    if (error) {
+      console.error('Erreur mise à jour profil:', error.message);
+      throw new Error(error.message);
+    }
+
+    return data as Profil;
+  },
+
+  // ─── Upload photo de profil ───
+
+  async uploadPhoto(userId: string, file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const filePath = `profils/${userId}/photo.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('medident')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      throw new Error('Erreur upload photo: ' + uploadError.message);
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('medident')
+      .getPublicUrl(filePath);
+
+    // Mettre à jour le profil avec l'URL
+    await supabase
+      .from('profils')
+      .update({ photo_url: publicUrl })
+      .eq('id', userId);
+
+    return publicUrl;
+  },
+
+  // ─── Réinitialisation mot de passe ───
+
+  async resetPassword(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) throw new Error(error.message);
+  },
+
+  async updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    if (error) throw new Error(error.message);
+  },
+
+  // ─── Listener changements d'auth ───
+
+  onAuthStateChange(callback: (event: string, session: any) => void) {
+    return supabase.auth.onAuthStateChange(callback);
+  },
 };
 
-export default AuthService; 
+export default AuthService;

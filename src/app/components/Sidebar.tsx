@@ -19,9 +19,7 @@ import Image from 'next/image';
 
 const Sidebar = () => {
   const pathname = usePathname();
-  const { user } = useAuth();
-
-  console.log(user);
+  const { profil } = useAuth();
 
   const menuItems = [
     {

@@ -8,7 +8,7 @@ import { patientService, type RendezVous } from '@/app/services/PatientService';
 import { Button } from '@/components/ui/button';
 
 export default function PatientDashboard() {
-  const { user, isLoading: isAuthLoading } = useAuth();
+  const { profil, isLoading: isAuthLoading } = useAuth();
   const [upcomingAppointment, setUpcomingAppointment] = useState<RendezVous | null>(null);
   const [history, setHistory] = useState<RendezVous[]>([]);
   const [isDataLoading, setIsDataLoading] = useState(true);
@@ -20,7 +20,7 @@ export default function PatientDashboard() {
     }
 
     // Si l'authentification est terminée et que nous avons un utilisateur, charger les données.
-    if (user?.id) {
+    if (profil?.id) {
       const fetchAppointments = async () => {
         setIsDataLoading(true);
         try {
@@ -81,7 +81,7 @@ export default function PatientDashboard() {
       // Si l'auth est terminée mais qu'il n'y a pas d'utilisateur, arrêter le chargement.
       setIsDataLoading(false);
     }
-  }, [user, isAuthLoading]);
+  }, [profil, isAuthLoading]);
 
   const handleCancelAppointment = async (rdvId: number) => {
     try {
@@ -106,7 +106,7 @@ export default function PatientDashboard() {
   }
 
   // Si l'authentification est terminée mais qu'il n'y a pas d'utilisateur.
-  if (!user) {
+  if (!profil) {
     return (
       <div className="p-6 bg-gray-50 min-h-[calc(100vh-6rem)] text-center">
         <p className="text-gray-600 mb-4">Veuillez vous connecter pour accéder à votre espace.</p>

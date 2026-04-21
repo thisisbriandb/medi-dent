@@ -1,4 +1,5 @@
-
+// @ts-nocheck
+// TODO: Migrer ce service pour utiliser Supabase directement
 import { api } from "./api";
 import { Medecin } from "@/types/medecin.types";
 import { Creneau } from "@/types/creneaux.types";

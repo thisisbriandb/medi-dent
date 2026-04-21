@@ -8,7 +8,7 @@ const mapCreneauToTimeSlot = (creneau: Creneau): TimeSlot => ({
   date: new Date(creneau.date_creneau),
   startTime: creneau.heure_debut,
   endTime: creneau.heure_fin,
-  isAvailable: creneau.disponible,
+  isAvailable: creneau.disponible ?? false,
   appointmentId: creneau.patient_id
 })
 
@@ -40,7 +40,7 @@ export function useCreneaux(startDate: Date, endDate: Date) {
               }
 
               try {
-                const creneaux = await CreneauxService.getCreneauxDisponibles(medecinId, date)
+                const creneaux = await CreneauxService.getCreneauxDisponibles(medecinId)
                 return {
                   date,
                   timeSlots: Array.isArray(creneaux) ? creneaux.map(mapCreneauToTimeSlot) : []

@@ -5,13 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState, SyntheticEvent } from "react";
-import { LoginHeader } from "@/app/components/login/Header";
 import Image from "next/image";
-import { ArrowLeft, Stethoscope, MapPin, Mail, Lock, User } from 'lucide-react';
-import AuthService from "@/app/services/AuthService";
+import { ArrowLeft, Stethoscope, Mail, Lock, User } from 'lucide-react';
+import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function MedecinRegisterPage() {
+  const { register } = useAuth();
   const router = useRouter();
   const [formData, setFormData] = useState({
     nom: "",
@@ -20,7 +20,6 @@ export default function MedecinRegisterPage() {
     password: "",
     confirmPassword: "",
     specialite: "",
-    ville: "",
   });
 
   const [error, setError] = useState<string | null>(null);
@@ -39,47 +38,22 @@ export default function MedecinRegisterPage() {
     }
 
     try {
-      console.log('Début de l\'inscription...');
-      const response = await AuthService.registerMedecin({
+      await register({
         nom: formData.nom,
         prenom: formData.prenom,
         email: formData.email,
-        mot_de_passe: formData.password,
+        password: formData.password,
         specialite: formData.specialite,
-        ville: formData.ville,
+        role: 'praticien',
       });
-      
-      console.log('Inscription réussie, réponse:', response);
-      console.log('Token stocké:', AuthService.getToken());
-      
-      // Vérifier que le token est bien stocké et récupérer les infos utilisateur
-      if (AuthService.isAuthenticated()) {
-        console.log('Token trouvé, récupération des informations utilisateur...');
-        const user = await AuthService.getCurrentUser();
-        
-        if (user && user.role === 'medecin') {
-          console.log('Utilisateur médecin confirmé, redirection vers le dashboard...');
-          router.push('/dashboard');
-        } else {
-          console.log('Type d\'utilisateur incorrect ou non trouvé');
-          setError("Erreur lors de la vérification du compte médecin.");
-          AuthService.removeToken();
-          router.push('/login');
-        }
-      } else {
-        console.log('Token non trouvé, redirection vers login...');
-        setError("Erreur lors de l'authentification.");
-        router.push('/login');
-      }
+      router.push('/dashboard');
     } catch (err: any) {
-      console.error('Erreur d\'inscription:', err);
-      setError(err.response?.data?.message || "Une erreur est survenue lors de l'inscription.");
+      setError(err.message || "Une erreur est survenue lors de l'inscription.");
     }
   };
 
   return (
     <>
-      <LoginHeader />
       <div className="w-full min-h-screen lg:grid lg:grid-cols-2">
         {/* Formulaire */}
         <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-white">
@@ -153,26 +127,6 @@ export default function MedecinRegisterPage() {
                       placeholder="Cardiologie"
                       required
                       value={formData.specialite}
-                      onChange={handleChange}
-                      className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Ville */}
-                <div className="relative">
-                  <Label htmlFor="ville" className="text-gray-700">
-                    Ville d'exercice
-                  </Label>
-                  <div className="mt-1 relative rounded-md shadow-sm">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      <MapPin className="h-5 w-5 text-gray-400" />
-                    </div>
-                    <Input
-                      id="ville"
-                      placeholder="Paris"
-                      required
-                      value={formData.ville}
                       onChange={handleChange}
                       className="pl-10 bg-gray-50 border-gray-300 focus:ring-blue-500 focus:border-blue-500"
                     />

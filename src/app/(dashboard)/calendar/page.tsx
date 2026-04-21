@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { AppointmentDialog } from "@/components/ui/appointment-dialog"
 import { WeekAvailabilityGrid } from "@/components/ui/availability-indicator"
 import { CreneauxService } from "@/app/services/CreneauxService"
-import AuthService, { User } from "@/app/services/AuthService"
+import { useAuth } from "@/contexts/AuthContext"
 import type { TimeSlot, WeekAvailability } from "@/types/appointment.types"
 import type { Creneau } from "@/types/creneaux.types"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
@@ -28,12 +28,12 @@ const today = startOfToday()
 const maxDate = addDays(today, MAX_WEEKS_IN_FUTURE * 7)
 
 export default function CalendarPage() {
+  const { profil, isLoading: isAuthLoading } = useAuth()
   const [currentDate, setCurrentDate] = React.useState(today)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [availability, setAvailability] = React.useState<WeekAvailability | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
-  const [currentUser, setCurrentUser] = React.useState<User | null>(null)
   const [allCreneaux, setAllCreneaux] = React.useState<Creneau[]>([])
 
   const startDate = useMemo(() => startOfWeek(currentDate, { locale: fr }), [currentDate])
@@ -46,11 +46,11 @@ export default function CalendarPage() {
   )
 
   const fetchCreneaux = useCallback(async () => {
-    if (!currentUser) return;
+    if (!profil) return;
     setIsLoading(true)
     setError(null)
     try {
-      const creneaux = await CreneauxService.getCreneauxDisponibles(currentUser.id.toString());
+      const creneaux = await CreneauxService.getCreneauxDisponibles(profil.id.toString());
       setAllCreneaux(creneaux || [])
     } catch (error: any) {
       console.error("Erreur lors du chargement des créneaux:", error)
@@ -59,32 +59,15 @@ export default function CalendarPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [currentUser])
+  }, [profil])
 
   React.useEffect(() => {
-    const fetchUser = async () => {
-      setIsLoading(true)
-      try {
-        const user = await AuthService.getCurrentUser();
-        if (user && user.role === 'medecin') {
-          setCurrentUser(user);
-        } else {
-          setError("Accès non autorisé. Cette page est réservée aux médecins.");
-          setIsLoading(false);
-        }
-      } catch (err) {
-        setError("Impossible de récupérer les informations de l'utilisateur.");
-        setIsLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
-
-  React.useEffect(() => {
-    if (currentUser) {
+    if (profil && !isAuthLoading) {
       fetchCreneaux()
+    } else if (!isAuthLoading && !profil) {
+      setIsLoading(false)
     }
-  }, [currentUser, fetchCreneaux])
+  }, [profil, isAuthLoading, fetchCreneaux])
   
   React.useEffect(() => {
     // Ce bloc s'exécute quand les créneaux sont chargés ou quand la semaine change.
@@ -153,7 +136,7 @@ export default function CalendarPage() {
   const isPrevWeekDisabled = isBefore(startDate, startOfWeek(today, { locale: fr }))
   const isNextWeekDisabled = isAfter(addDays(currentDate, 7), maxDate)
   
-  if (isLoading && !currentUser) {
+  if (isLoading && !profil) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
@@ -181,7 +164,7 @@ export default function CalendarPage() {
           </div>
         </div>
         
-        {currentUser && currentUser.role === 'medecin' && (
+        {profil && (profil.role === 'praticien' || profil.role === 'medecin_chef') && (
             <Button onClick={() => setIsDialogOpen(true)} disabled={isLoading}>
                 <Plus className="mr-2 h-4 w-4" />
                 Nouveau créneau
@@ -210,11 +193,11 @@ export default function CalendarPage() {
         />
       )}
 
-      {currentUser && (
+      {profil && (
         <AppointmentDialog
           isOpen={isDialogOpen}
           onClose={handleDialogClose}
-          medecinId={currentUser.id.toString()}
+          medecinId={profil.id.toString()}
           onCreneauxCreated={fetchCreneaux}
         />
       )}

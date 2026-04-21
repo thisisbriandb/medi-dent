@@ -27,7 +27,7 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
     selectedTime,
     onAppointmentBooked 
 }) => {
-    const { user } = useAuth();
+    const { profil } = useAuth();
     const [creneaux, setCreneaux] = useState<Creneau[]>([]);
     const [selectedCreneau, setSelectedCreneau] = useState<Creneau | null>(null);
     const [loading, setLoading] = useState(false);
@@ -77,7 +77,7 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
     }, [isOpen, medecin, selectedDate, selectedTime]);
 
     const handleBooking = async () => {
-        if (!medecin || !selectedDate || !selectedTime || !user) {
+        if (!medecin || !selectedDate || !selectedTime || !profil) {
             setError("Informations manquantes pour la réservation.");
             return;
         }
@@ -132,7 +132,7 @@ export const BookingDialog: React.FC<BookingDialogProps> = ({
             console.log('Found matching creneau:', creneau);
 
             await AppointmentService.createAppointment({
-                patientId: user.id.toString(),
+                patientId: profil.id.toString(),
                 doctorId: medecin.id_medecin.toString(),
                 date: selectedDate,
                 time: selectedTime,

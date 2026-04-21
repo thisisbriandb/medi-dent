@@ -1,13 +1,11 @@
  'use client';
 
-import { Search, Bell, Moon, ChevronDown } from 'lucide-react';
+import { Search, Bell, Moon, ChevronDown, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
-  const { user } = useAuth();
-
-  console.log(user);
+  const { profil, logout } = useAuth();
 
   return (
     <header className="fixed top-0 right-0 left-64 h-16 bg-white border-b border-gray-200 z-20">
@@ -25,7 +23,6 @@ const Header = () => {
             </kbd>
           </div>
         </div>
-      
 
         <div className="flex items-center gap-4">
           <button className="p-2 hover:bg-gray-100 rounded-lg">
@@ -38,19 +35,22 @@ const Header = () => {
           <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
             <div className="relative w-8 h-8 rounded-full overflow-hidden">
               <Image
-                src="/default-avatar.png"
+                src={profil?.photo_url || '/default-avatar.png'}
                 alt="Photo de profil"
                 fill
                 className="object-cover"
               />
             </div>
-            <div className="flex items-center gap-2 cursor-pointer">
+            <div className="flex items-center gap-2">
               <div>
-                <p className="text-sm font-medium">{user?.name}</p>
-                <p className="text-xs text-gray-500">{user?.role}</p>
+                <p className="text-sm font-medium">{profil?.prenom} {profil?.nom}</p>
+                <p className="text-xs text-gray-500 capitalize">{profil?.role?.replace('_', ' ')}</p>
               </div>
               <ChevronDown className="w-4 h-4 text-gray-500" />
             </div>
+            <button onClick={logout} className="p-2 hover:bg-gray-100 rounded-lg" title="Se déconnecter">
+              <LogOut className="w-4 h-4 text-gray-500" />
+            </button>
           </div>
         </div>
       </div>
