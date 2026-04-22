@@ -225,6 +225,20 @@ const AuthService = {
     return publicUrl;
   },
 
+  // ─── Mise à jour établissement ───
+
+  async updateEtablissement(etabId: string, updates: Record<string, any>): Promise<void> {
+    const { error } = await supabase
+      .from('etablissements')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', etabId);
+
+    if (error) {
+      console.error('Erreur mise à jour établissement:', error.message);
+      throw new Error(error.message);
+    }
+  },
+
   // ─── Réinitialisation mot de passe ───
 
   async resetPassword(email: string) {
