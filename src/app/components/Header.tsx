@@ -1,29 +1,21 @@
  'use client';
 
-import { Search, Bell, Moon, ChevronDown, LogOut } from 'lucide-react';
+import { Bell, Moon, ChevronDown, LogOut } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
-const Header = () => {
+interface HeaderProps {
+  sidebarCollapsed: boolean;
+}
+
+const Header = ({ sidebarCollapsed }: HeaderProps) => {
   const { profil, logout } = useAuth();
 
   return (
-    <header className="fixed top-0 right-0 left-64 h-16 bg-white border-b border-gray-200 z-20">
-      <div className="flex items-center justify-between h-full px-6">
-        <div className="flex-1 max-w-2xl">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <input
-              type="text"
-              placeholder="Rechercher..."
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-            <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-400 border border-gray-200 rounded px-1.5 py-0.5">
-              ⌘K
-            </kbd>
-          </div>
-        </div>
-
+    <header className={`fixed top-0 right-0 h-16 bg-white border-b border-gray-200 z-20 transition-all duration-300 ${
+      sidebarCollapsed ? 'left-20' : 'left-64'
+    }`}>
+      <div className="flex items-center justify-end h-full px-6">
         <div className="flex items-center gap-4">
           <button className="p-2 hover:bg-gray-100 rounded-lg">
             <Moon className="w-5 h-5 text-gray-600" />

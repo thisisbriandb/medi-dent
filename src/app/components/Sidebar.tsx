@@ -14,11 +14,18 @@ import {
   Files,
   MessageSquare,
   Mail,
-  Receipt
+  Receipt,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import Image from 'next/image'; 
 
-const Sidebar = () => {
+interface SidebarProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
   const pathname = usePathname();
   const { profil } = useAuth();
 
@@ -91,20 +98,46 @@ const Sidebar = () => {
   ];
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 z-30">
-      <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-200">
-          <div className="relative w-20 h-20">
+    <aside
+      className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-30 transition-all duration-300 ${
+        collapsed ? 'w-20' : 'w-64'
+      }`}
+    >
+      <div className="flex items-center justify-between px-4 py-5 border-b border-gray-200">
+        <div className={`relative transition-all duration-300 ${collapsed ? 'w-10 h-10 mx-auto' : 'w-20 h-20'}`}>
           <Image src="/logo.png" alt="Logo AllôDocta" fill className="object-contain" />
         </div>
-      
+        {!collapsed && (
+          <button
+            onClick={onToggle}
+            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600"
+            title="Réduire le menu"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
-      <nav className="p-4">
+      {collapsed && (
+        <div className="flex justify-center py-3 border-b border-gray-200">
+          <button
+            onClick={onToggle}
+            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600"
+            title="Ouvrir le menu"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      <nav className={`p-4 overflow-y-auto h-[calc(100vh-6rem)] ${collapsed ? 'px-2' : ''}`}>
         {menuItems.map((section, idx) => (
           <div key={idx} className="mb-6">
-            <h2 className="text-xs font-semibold text-gray-400 mb-4 px-4">
-              {section.title}
-            </h2>
+            {!collapsed && (
+              <h2 className="text-xs font-semibold text-gray-400 mb-4 px-4">
+                {section.title}
+              </h2>
+            )}
             <ul className="space-y-1">
               {section.items.map((item, itemIdx) => {
                 const isActive = pathname === item.href;
@@ -112,14 +145,15 @@ const Sidebar = () => {
                   <li key={itemIdx}>
                     <Link
                       href={item.href}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm ${
+                      title={collapsed ? item.label : undefined}
+                      className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
                         isActive
                           ? 'bg-blue-50 text-blue-600'
                           : 'text-gray-600 hover:bg-gray-50'
-                      }`}
+                      } ${collapsed ? 'justify-center px-2' : ''}`}
                     >
                       {item.icon}
-                      {item.label}
+                      {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
                     </Link>
                   </li>
                 );
@@ -132,4 +166,4 @@ const Sidebar = () => {
   );
 };
 
-export default Sidebar; 
+export default Sidebar;
