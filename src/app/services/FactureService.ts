@@ -28,14 +28,27 @@ async function generateNumeroFacture(idEtablissement: string): Promise<string> {
   const year = new Date().getFullYear();
   const prefix = `FAC-${year}-`;
 
-  const { count } = await supabase
+  // On récupère le dernier numéro généré pour ce préfixe
+  const { data, error } = await supabase
     .from('factures')
-    .select('id', { count: 'exact', head: true })
+    .select('numero')
     .eq('id_etablissement', idEtablissement)
-    .ilike('numero', `${prefix}%`);
+    .ilike('numero', `${prefix}%`)
+    .order('numero', { ascending: false })
+    .limit(1);
 
-  const next = (count ?? 0) + 1;
-  return `${prefix}${String(next).padStart(4, '0')}`;
+  if (error || !data || data.length === 0) {
+    return `${prefix}0001`;
+  }
+
+  // Extraction du numéro de séquence (ex: FAC-2024-0012 -> 12)
+  const lastNumero = data[0].numero;
+  const parts = lastNumero.split('-');
+  const lastSeqStr = parts[parts.length - 1];
+  const lastSeq = parseInt(lastSeqStr, 10);
+  
+  const nextSeq = isNaN(lastSeq) ? 1 : lastSeq + 1;
+  return `${prefix}${String(nextSeq).padStart(4, '0')}`;
 }
 
 const FACTURE_SELECT = `
@@ -119,41 +132,58 @@ const FactureService = {
     const ctx = await getUserEtablissement();
     if (!ctx) throw new Error('Établissement introuvable.');
 
-    const numero = await generateNumeroFacture(ctx.etabId);
     const tauxTva = input.taux_tva ?? ctx.tauxTva;
     const totalHt = input.total_ht;
     const montantTva = Math.round(totalHt * tauxTva) / 100;
     const totalTtc = totalHt + montantTva;
 
-    const { data, error } = await supabase
-      .from('factures')
-      .insert({
-        id_etablissement: ctx.etabId,
-        id_patient: input.id_patient,
-        id_praticien: ctx.userId,
-        id_consultation: input.id_consultation || null,
-        numero,
-        date_emission: input.date_emission || new Date().toISOString().slice(0, 10),
-        date_echeance: input.date_echeance || null,
-        lignes: input.lignes as any,
-        total_ht: totalHt,
-        taux_tva: tauxTva,
-        montant_tva: montantTva,
-        total_ttc: totalTtc,
-        total_paye: 0,
-        reste_a_payer: totalTtc,
-        statut: 'emise',
-        notes: input.notes || null,
-      })
-      .select(FACTURE_SELECT)
-      .single();
+    // Tentative de création avec gestion de collision (retry 3 fois)
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    if (error) {
+    while (attempts < maxAttempts) {
+      const numero = await generateNumeroFacture(ctx.etabId);
+
+      const { data, error } = await supabase
+        .from('factures')
+        .insert({
+          id_etablissement: ctx.etabId,
+          id_patient: input.id_patient,
+          id_praticien: ctx.userId,
+          id_consultation: input.id_consultation || null,
+          numero,
+          date_emission: input.date_emission || new Date().toISOString().slice(0, 10),
+          date_echeance: input.date_echeance || null,
+          lignes: input.lignes as any,
+          total_ht: totalHt,
+          taux_tva: tauxTva,
+          montant_tva: montantTva,
+          total_ttc: totalTtc,
+          total_paye: 0,
+          reste_a_payer: totalTtc,
+          statut: 'emise',
+          notes: input.notes || null,
+        })
+        .select(FACTURE_SELECT)
+        .single();
+
+      if (!error) {
+        return data as unknown as Facture;
+      }
+
+      // Si erreur de contrainte unique (duplicate key), on réessaye
+      if ((error.code === '23505' || error.message?.includes('unique constraint')) && attempts < maxAttempts - 1) {
+        attempts++;
+        // Petit délai pour laisser passer une autre transaction concurrente
+        await new Promise(resolve => setTimeout(resolve, 100 * attempts));
+        continue;
+      }
+
       console.error('Erreur création facture:', error.message);
       throw new Error(error.message);
     }
 
-    return data as unknown as Facture;
+    throw new Error('Impossible de générer un numéro de facture unique après plusieurs tentatives.');
   },
 
   // ─── Mise à jour ───

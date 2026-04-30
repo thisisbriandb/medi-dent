@@ -28,14 +28,27 @@ async function generateNumeroDossier(idEtablissement: string): Promise<string> {
   const year = new Date().getFullYear();
   const prefix = `PAT-${year}-`;
 
-  const { count } = await supabase
+  // On récupère le dernier numéro généré pour ce préfixe
+  const { data, error } = await supabase
     .from('patients')
-    .select('id', { count: 'exact', head: true })
+    .select('numero_dossier')
     .eq('id_etablissement', idEtablissement)
-    .ilike('numero_dossier', `${prefix}%`);
+    .ilike('numero_dossier', `${prefix}%`)
+    .order('numero_dossier', { ascending: false })
+    .limit(1);
 
-  const next = (count ?? 0) + 1;
-  return `${prefix}${String(next).padStart(4, '0')}`;
+  if (error || !data || data.length === 0) {
+    return `${prefix}0001`;
+  }
+
+  // Extraction du numéro de séquence (ex: PAT-2024-0012 -> 12)
+  const lastNumero = data[0].numero_dossier;
+  const parts = lastNumero.split('-');
+  const lastSeqStr = parts[parts.length - 1];
+  const lastSeq = parseInt(lastSeqStr, 10);
+  
+  const nextSeq = isNaN(lastSeq) ? 1 : lastSeq + 1;
+  return `${prefix}${String(nextSeq).padStart(4, '0')}`;
 }
 
 // ─── Service ───
@@ -108,20 +121,36 @@ const PatientSupabaseService = {
     const idEtab = await getUserEtablissement();
     if (!idEtab) throw new Error('Établissement introuvable.');
 
-    const numero_dossier = await generateNumeroDossier(idEtab);
+    // Tentative de création avec gestion de collision (retry 3 fois)
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    const { data, error } = await supabase
-      .from('patients')
-      .insert({ ...input, id_etablissement: idEtab, numero_dossier })
-      .select('*')
-      .single();
+    while (attempts < maxAttempts) {
+      const numero_dossier = await generateNumeroDossier(idEtab);
 
-    if (error) {
+      const { data, error } = await supabase
+        .from('patients')
+        .insert({ ...input, id_etablissement: idEtab, numero_dossier })
+        .select('*')
+        .single();
+
+      if (!error) {
+        return data as Patient;
+      }
+
+      // Si erreur de contrainte unique (duplicate key), on réessaye
+      if ((error.code === '23505' || error.message?.includes('unique constraint')) && attempts < maxAttempts - 1) {
+        attempts++;
+        // Petit délai pour laisser passer une autre transaction concurrente
+        await new Promise(resolve => setTimeout(resolve, 100 * attempts));
+        continue;
+      }
+
       console.error('Erreur création patient:', error.message);
       throw new Error(error.message);
     }
 
-    return data as Patient;
+    throw new Error('Impossible de générer un numéro de dossier unique après plusieurs tentatives.');
   },
 
   // ─── Mise à jour ───
