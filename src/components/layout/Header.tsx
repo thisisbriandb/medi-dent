@@ -19,27 +19,8 @@ export function Header() {
               />
             </Link>
 
-          {/* Navigation Principale */}
-          <nav className="hidden md:flex items-center gap-8">
-            <Link
-              href="/medecins"
-              className="text-gray-600 hover:text-cyan-600 transition-colors"
-            >
-              Trouver un médecin
-            </Link>
-            <Link
-              href="/rendez-vous"
-              className="text-gray-600 hover:text-cyan-600 transition-colors"
-            >
-              Mes rendez-vous
-            </Link>
-            <Link
-              href="/blog"
-              className="text-gray-600 hover:text-cyan-600 transition-colors"
-            >
-              Blog santé
-            </Link>
-          </nav>
+      
+         
 
           {/* Boutons d'action */}
           <div className="flex items-center gap-4">

@@ -8,15 +8,43 @@ export interface LoginCredentials {
   password: string;
 }
 
+export type UserRole = 'admin' | 'medecin_chef' | 'praticien' | 'infirmier' | 'comptable' | 'stagiaire' | 'secretaire';
+
 export interface RegisterData {
   email: string;
   password: string;
   nom: string;
   prenom: string;
-  role: 'admin' | 'medecin_chef' | 'praticien' | 'infirmier' | 'comptable' | 'stagiaire' | 'secretaire';
+  role: UserRole;
   telephone?: string;
   specialite?: string;
   id_etablissement?: string;
+}
+
+export interface EtablissementRegisterData {
+  email: string;
+  password: string;
+  nom: string;
+  prenom: string;
+  telephone?: string;
+  specialite?: string;
+  etablissement: {
+    nom: string;
+    adresse?: string;
+    telephone?: string;
+    mode_actif: 'cabinet' | 'hopital';
+    devise?: string;
+  };
+}
+
+export interface InvitationRegisterData {
+  email: string;
+  password: string;
+  nom: string;
+  prenom: string;
+  telephone?: string;
+  specialite?: string;
+  code_invitation: string;
 }
 
 export interface Profil {
@@ -120,24 +148,17 @@ const AuthService = {
     return { profil };
   },
 
-  // ─── Register ───
+  // ─── Register (legacy) ───
 
   async register(data: RegisterData): Promise<{ profil: Profil }> {
-    // 1. Créer le compte Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
     });
 
-    if (authError) {
-      throw new Error(authError.message);
-    }
+    if (authError) throw new Error(authError.message);
+    if (!authData.user) throw new Error('Erreur lors de la création du compte.');
 
-    if (!authData.user) {
-      throw new Error('Erreur lors de la création du compte.');
-    }
-
-    // 2. Créer le profil dans la table profils
     const { error: profilError } = await supabase
       .from('profils')
       .insert({
@@ -156,12 +177,127 @@ const AuthService = {
       throw new Error('Compte créé mais le profil n\'a pas pu être enregistré: ' + profilError.message);
     }
 
-    // 3. Récupérer le profil complet
     const profil = await this.getProfil(authData.user.id);
-    if (!profil) {
-      throw new Error('Profil créé mais introuvable.');
+    if (!profil) throw new Error('Profil créé mais introuvable.');
+    return { profil };
+  },
+
+  // ─── Register : Créer un cabinet (onboarding) ───
+
+  async registerWithEtablissement(data: EtablissementRegisterData): Promise<{ profil: Profil }> {
+    // 0. Nettoyer toute session résiduelle pour éviter les locks orphelins
+    await supabase.auth.signOut().catch(() => {});
+
+    // 1. Auth signup
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+    });
+    if (authError) throw new Error(authError.message);
+    if (!authData.user) throw new Error('Erreur lors de la création du compte.');
+
+    if (!authData.session) {
+      throw new Error('Cette adresse email est déjà utilisée ou la confirmation email est requise.');
     }
 
+    // 2. Créer l'établissement (UUID généré côté client)
+    const etabId = crypto.randomUUID();
+    const { error: etabError } = await supabase
+      .from('etablissements')
+      .insert({
+        id: etabId,
+        nom: data.etablissement.nom,
+        adresse: data.etablissement.adresse || null,
+        telephone: data.etablissement.telephone || null,
+        mode_actif: data.etablissement.mode_actif,
+        devise: data.etablissement.devise || 'XOF',
+      });
+
+    if (etabError) {
+      throw new Error('Erreur lors de la création de l\'établissement: ' + etabError.message);
+    }
+
+    // 3. Créer le profil (medecin_chef)
+    const { error: profilError } = await supabase
+      .from('profils')
+      .insert({
+        id: authData.user.id,
+        nom: data.nom,
+        prenom: data.prenom,
+        role: 'medecin_chef' as UserRole,
+        email: data.email,
+        telephone: data.telephone || null,
+        specialite: data.specialite || null,
+        id_etablissement: etabId,
+      });
+
+    if (profilError) {
+      throw new Error('Établissement créé mais le profil n\'a pas pu être enregistré: ' + profilError.message);
+    }
+
+    const profil = await this.getProfil(authData.user.id);
+    if (!profil) throw new Error('Profil créé mais introuvable.');
+    return { profil };
+  },
+
+  // ─── Register : Rejoindre via code invitation ───
+
+  async registerWithInvitation(data: InvitationRegisterData): Promise<{ profil: Profil }> {
+    // 1. Valider le code
+    const { data: invitation, error: invError } = await supabase
+      .from('invitations')
+      .select('*')
+      .eq('code', data.code_invitation.toUpperCase().trim())
+      .eq('utilise', false)
+      .maybeSingle();
+
+    if (invError || !invitation) throw new Error('Code d\'invitation invalide.');
+    if (new Date(invitation.expire_at) < new Date()) throw new Error('Ce code d\'invitation a expiré.');
+    if (invitation.email_invite && invitation.email_invite !== data.email) {
+      throw new Error('Ce code est réservé à une autre adresse email.');
+    }
+
+    // 2. Nettoyer toute session résiduelle
+    await supabase.auth.signOut().catch(() => {});
+
+    // 3. Auth signup
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+    });
+    if (authError) throw new Error(authError.message);
+    if (!authData.user) throw new Error('Erreur lors de la création du compte.');
+    if (!authData.session) {
+      throw new Error('Cette adresse email est déjà utilisée ou la confirmation email est requise.');
+    }
+
+    // 4. Créer le profil avec le rôle et l'établissement de l'invitation
+    const { error: profilError } = await supabase
+      .from('profils')
+      .insert({
+        id: authData.user.id,
+        nom: data.nom,
+        prenom: data.prenom,
+        role: invitation.role as UserRole,
+        email: data.email,
+        telephone: data.telephone || null,
+        specialite: data.specialite || null,
+        id_etablissement: invitation.id_etablissement,
+      });
+
+    if (profilError) {
+      console.error('Erreur création profil:', profilError.message);
+      throw new Error('Compte créé mais le profil n\'a pas pu être enregistré.');
+    }
+
+    // 4. Consommer l'invitation
+    await supabase
+      .from('invitations')
+      .update({ utilise: true, id_utilise_par: authData.user.id })
+      .eq('id', invitation.id);
+
+    const profil = await this.getProfil(authData.user.id);
+    if (!profil) throw new Error('Profil créé mais introuvable.');
     return { profil };
   },
 

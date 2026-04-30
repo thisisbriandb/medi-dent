@@ -15,17 +15,22 @@ import {
   ClipboardList,
   AlertTriangle,
   User,
+  CircleDot,
 } from 'lucide-react';
 import PatientSupabaseService from '@/app/services/PatientSupabaseService';
 import PatientFormDialog from '@/app/components/patients/PatientFormDialog';
 import type { Patient, ConsultationRow, FactureRow, OrdonnanceRow, StatutFacture } from '@/types/patient.types';
 import type { PatientFormData } from '@/app/components/patients/PatientFormDialog';
+import Odontogramme from '@/app/components/odontogramme/Odontogramme';
+import OdontogrammeService from '@/app/services/OdontogrammeService';
+import type { OdontogrammeData, Odontogramme as OdontogrammeType } from '@/types/odontogramme.types';
 
-type TabKey = 'identite' | 'medical' | 'consultations' | 'factures' | 'ordonnances';
+type TabKey = 'identite' | 'medical' | 'odontogramme' | 'consultations' | 'factures' | 'ordonnances';
 
 const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
   { key: 'identite', label: 'Identité', icon: <User className="w-4 h-4" /> },
   { key: 'medical', label: 'Médical', icon: <Heart className="w-4 h-4" /> },
+  { key: 'odontogramme', label: 'Odontogramme', icon: <CircleDot className="w-4 h-4" /> },
   { key: 'consultations', label: 'Consultations', icon: <ClipboardList className="w-4 h-4" /> },
   { key: 'factures', label: 'Factures', icon: <Receipt className="w-4 h-4" /> },
   { key: 'ordonnances', label: 'Ordonnances', icon: <FileText className="w-4 h-4" /> },
@@ -123,6 +128,10 @@ export default function PatientDetailPage() {
   const [consultations, setConsultations] = useState<ConsultationRow[]>([]);
   const [factures, setFactures] = useState<FactureRow[]>([]);
   const [ordonnances, setOrdonnances] = useState<OrdonnanceRow[]>([]);
+  const [odontogrammeData, setOdontogrammeData] = useState<OdontogrammeData>({});
+  const [odontogrammeNotes, setOdontogrammeNotes] = useState('');
+  const [odontogrammeLoaded, setOdontogrammeLoaded] = useState(false);
+  const [odontogrammeSaving, setOdontogrammeSaving] = useState(false);
   const [tabLoading, setTabLoading] = useState(false);
 
   const fetchPatient = useCallback(async () => {
@@ -152,6 +161,13 @@ export default function PatientDetailPage() {
         } else if (activeTab === 'ordonnances' && ordonnances.length === 0) {
           const data = await PatientSupabaseService.getOrdonnances(patientId);
           setOrdonnances(data);
+        } else if (activeTab === 'odontogramme' && !odontogrammeLoaded) {
+          const odonto = await OdontogrammeService.getByPatient(patientId);
+          if (odonto) {
+            setOdontogrammeData(odonto.data || {});
+            setOdontogrammeNotes(odonto.notes || '');
+          }
+          setOdontogrammeLoaded(true);
         }
       } catch (err) {
         console.error('Erreur chargement onglet:', err);
@@ -162,6 +178,19 @@ export default function PatientDetailPage() {
 
     loadTabData();
   }, [activeTab, patientId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleOdontogrammeSave = async (newData: OdontogrammeData, newNotes: string) => {
+    setOdontogrammeSaving(true);
+    try {
+      await OdontogrammeService.save(patientId, newData, newNotes || null);
+      setOdontogrammeData(newData);
+      setOdontogrammeNotes(newNotes);
+    } catch (err) {
+      console.error('Erreur sauvegarde odontogramme:', err);
+    } finally {
+      setOdontogrammeSaving(false);
+    }
+  };
 
   const handleEdit = async (data: PatientFormData) => {
     await PatientSupabaseService.update(patientId, {
@@ -313,6 +342,14 @@ export default function PatientDetailPage() {
             <>
               {activeTab === 'identite' && <TabIdentite patient={patient} />}
               {activeTab === 'medical' && <TabMedical patient={patient} />}
+              {activeTab === 'odontogramme' && (
+                <Odontogramme
+                  initialData={odontogrammeData}
+                  notes={odontogrammeNotes}
+                  onSave={handleOdontogrammeSave}
+                  saving={odontogrammeSaving}
+                />
+              )}
               {activeTab === 'consultations' && <TabConsultations data={consultations} />}
               {activeTab === 'factures' && <TabFactures data={factures} />}
               {activeTab === 'ordonnances' && <TabOrdonnances data={ordonnances} />}

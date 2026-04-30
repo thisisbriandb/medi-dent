@@ -25,6 +25,7 @@ export interface Consultation {
   date_consultation: string;
   motif: string | null;
   actes_realises: string | null;
+  dents_concernees: string[] | null;
   notes_cliniques: string | null;
   compte_rendu: string | null;
   compte_rendu_ia: string | null;
@@ -50,6 +51,7 @@ export interface ConsultationInsert {
   date_consultation?: string;
   motif?: string | null;
   actes_realises?: string | null;
+  dents_concernees?: string[] | null;
   notes_cliniques?: string | null;
   compte_rendu?: string | null;
 }

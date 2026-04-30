@@ -146,6 +146,13 @@ export default function LoginPage() {
               </button>
             </div>
           </form>
+
+          <div className="text-center text-gray-600">
+            Pas encore de compte ?{" "}
+            <Link href="/register" className="text-blue-600 hover:text-blue-800 font-medium">
+              Créer un cabinet
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -154,7 +161,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-black/20 z-10"></div>
         <div className="absolute inset-0">
           <Image
-            src="/doctor-consultation.jpg"
+            src="/doctor_consultation.png"
             alt="MediDent Pro"
             fill
             priority

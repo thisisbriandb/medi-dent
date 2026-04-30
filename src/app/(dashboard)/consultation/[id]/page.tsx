@@ -262,6 +262,18 @@ export default function ConsultationDetailPage() {
         ) : (
           <div className="space-y-0">
             <InfoRow label="Motif" value={consultation.motif} />
+            {consultation.dents_concernees && consultation.dents_concernees.length > 0 && (
+              <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 py-3 border-b border-gray-50">
+                <span className="text-sm text-gray-400 sm:w-44 flex-shrink-0">Dents concernées</span>
+                <div className="flex flex-wrap gap-1">
+                  {consultation.dents_concernees.map((d) => (
+                    <span key={d} className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-mono font-medium">
+                      {d}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
             <InfoRow label="Actes réalisés" value={consultation.actes_realises} />
             <InfoRow label="Notes cliniques" value={consultation.notes_cliniques} />
             <InfoRow label="Compte rendu" value={consultation.compte_rendu} />

@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import AuthService, { 
   LoginCredentials, 
   RegisterData,
+  EtablissementRegisterData,
+  InvitationRegisterData,
   Profil 
 } from '@/app/services/AuthService';
 import { useRouter } from 'next/navigation';
@@ -15,6 +17,8 @@ interface AuthContextType {
   modeActif: 'cabinet' | 'hopital';
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
+  registerWithEtablissement: (data: EtablissementRegisterData) => Promise<void>;
+  registerWithInvitation: (data: InvitationRegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfil: () => Promise<void>;
 }
@@ -139,6 +143,40 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const registerWithEtablissement = async (data: EtablissementRegisterData) => {
+    setIsLoading(true);
+    try {
+      skipNextAuthEvent.current = true;
+      const { profil: p } = await AuthService.registerWithEtablissement(data);
+      setProfil(p);
+      setIsAuthenticated(true);
+      router.push('/dashboard');
+    } catch (error) {
+      skipNextAuthEvent.current = false;
+      console.error("Échec de l'inscription établissement", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const registerWithInvitation = async (data: InvitationRegisterData) => {
+    setIsLoading(true);
+    try {
+      skipNextAuthEvent.current = true;
+      const { profil: p } = await AuthService.registerWithInvitation(data);
+      setProfil(p);
+      setIsAuthenticated(true);
+      router.push('/dashboard');
+    } catch (error) {
+      skipNextAuthEvent.current = false;
+      console.error("Échec de l'inscription par invitation", error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     setIsLoading(true);
     try {
@@ -169,6 +207,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     modeActif,
     login,
     register,
+    registerWithEtablissement,
+    registerWithInvitation,
     logout,
     refreshProfil,
   };

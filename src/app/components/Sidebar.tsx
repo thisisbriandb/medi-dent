@@ -8,6 +8,7 @@ import {
   Calendar, 
   UserCircle, 
   Users,
+  UsersRound,
   ClipboardList, 
   FileText, 
   Table, 
@@ -79,19 +80,19 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       title: 'SUPPORT',
       items: [
         {
-          label: 'Chat',
-          icon: <MessageSquare className="w-5 h-5" />,
-          href: '/chat'
-        },
-        {
-          label: 'Email',
-          icon: <Mail className="w-5 h-5" />,
-          href: '/email'
+          label: 'Équipe',
+          icon: <UsersRound className="w-5 h-5" />,
+          href: '/equipe'
         },
         {
           label: 'Factures',
           icon: <Receipt className="w-5 h-5" />,
           href: '/invoices'
+        },
+        {
+          label: 'Email',
+          icon: <Mail className="w-5 h-5" />,
+          href: '/email'
         }
       ]
     }
