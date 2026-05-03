@@ -28,7 +28,7 @@ async function generateNumeroDossier(idEtablissement: string): Promise<string> {
   const year = new Date().getFullYear();
   const prefix = `PAT-${year}-`;
 
-  // On récupère le dernier numéro généré pour ce préfixe
+  // On calcule la séquence par établissement.
   const { data, error } = await supabase
     .from('patients')
     .select('numero_dossier')
