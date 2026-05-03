@@ -54,15 +54,21 @@ export default function ConsultationDetailPage() {
 
   const fetchConsultation = useCallback(async () => {
     setIsLoading(true);
-    const data = await ConsultationService.getById(consultationId);
-    setConsultation(data);
-    if (data) {
-      setEditMotif(data.motif || '');
-      setEditNotes(data.notes_cliniques || '');
-      setEditCompteRendu(data.compte_rendu || '');
-      setEditActes(data.actes_realises || '');
+    try {
+      const data = await ConsultationService.getById(consultationId);
+      setConsultation(data);
+      if (data) {
+        setEditMotif(data.motif || '');
+        setEditNotes(data.notes_cliniques || '');
+        setEditCompteRendu(data.compte_rendu || '');
+        setEditActes(data.actes_realises || '');
+      }
+    } catch (error) {
+      console.error('Erreur chargement consultation:', error);
+      setConsultation(null);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [consultationId]);
 
   useEffect(() => {

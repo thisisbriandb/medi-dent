@@ -1,26 +1,28 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Plus, ChevronLeft, ChevronRight, Receipt, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
 import FactureService from '@/app/services/FactureService';
 import { useEtablissement } from '@/hooks/useEtablissement';
 import { formatMoney, formatDate } from '@/lib/format';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Facture, FactureFilters, StatutFacture } from '@/types/facture.types';
 
 const LIMIT = 20;
 
 const STATUT_BADGE: Record<StatutFacture, { label: string; cls: string }> = {
-  brouillon: { label: 'Brouillon', cls: 'bg-gray-100 text-gray-600' },
-  emise: { label: 'Émise', cls: 'bg-blue-100 text-blue-700' },
-  payee: { label: 'Payée', cls: 'bg-emerald-100 text-emerald-700' },
-  partiellement_payee: { label: 'Partielle', cls: 'bg-amber-100 text-amber-700' },
-  annulee: { label: 'Annulée', cls: 'bg-gray-100 text-gray-400' },
-  impayee: { label: 'Impayée', cls: 'bg-red-100 text-red-700' },
+  brouillon: { label: 'Brouillon', cls: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200' },
+  emise: { label: 'Émise', cls: 'bg-blue-100 text-blue-800 ring-1 ring-blue-200' },
+  payee: { label: 'Payée', cls: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200' },
+  partiellement_payee: { label: 'Partielle', cls: 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' },
+  annulee: { label: 'Annulée', cls: 'bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200' },
+  impayee: { label: 'Impayée', cls: 'bg-rose-100 text-rose-800 ring-1 ring-rose-200' },
 };
 
 export default function InvoicesPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const etab = useEtablissement();
   const devise = etab?.devise || 'XOF';
   const [factures, setFactures] = useState<Facture[]>([]);
@@ -31,24 +33,33 @@ export default function InvoicesPage() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const [result, s] = await Promise.all([
-        FactureService.getAll(filters),
-        FactureService.getStats(),
-      ]);
-      setFactures(result.data);
-      setTotal(result.total);
-      setStats(s);
-    } catch (err) {
-      console.error('Erreur chargement factures:', err);
-    } finally {
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
       setIsLoading(false);
+      return;
     }
-  }, [filters]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const [result, s] = await Promise.all([
+          FactureService.getAll(filters),
+          FactureService.getStats(),
+        ]);
+        if (cancelled) return;
+        setFactures(result.data);
+        setTotal(result.total);
+        setStats(s);
+      } catch (err) {
+        console.error('Erreur chargement factures:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [authLoading, isAuthenticated, filters]);
 
   return (
     <div className="space-y-6">

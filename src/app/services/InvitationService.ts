@@ -33,8 +33,8 @@ const InvitationService = {
     const expireAt = new Date();
     expireAt.setDate(expireAt.getDate() + (params.expire_days || 7));
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Non authentifié');
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) throw new Error('Non authentifié');
 
     const { data, error } = await supabase
       .from('invitations')
@@ -44,7 +44,7 @@ const InvitationService = {
         role: params.role,
         email_invite: params.email_invite || null,
         expire_at: expireAt.toISOString(),
-        created_by: user.id,
+        created_by: session.user.id,
       })
       .select()
       .single();

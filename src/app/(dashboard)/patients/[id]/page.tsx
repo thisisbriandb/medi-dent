@@ -77,17 +77,20 @@ function statutLabel(statut: StatutFacture): string {
 
 function statutColor(statut: StatutFacture): string {
   switch (statut) {
+    case 'brouillon':
+      return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200';
     case 'payee':
-      return 'bg-gray-100 text-gray-700';
+      return 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200';
     case 'emise':
+      return 'bg-blue-100 text-blue-800 ring-1 ring-blue-200';
     case 'partiellement_payee':
-      return 'bg-blue-50 text-blue-700';
+      return 'bg-amber-100 text-amber-800 ring-1 ring-amber-200';
     case 'impayee':
-      return 'bg-red-50 text-red-600';
+      return 'bg-rose-100 text-rose-800 ring-1 ring-rose-200';
     case 'annulee':
-      return 'bg-gray-50 text-gray-400';
+      return 'bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200';
     default:
-      return 'bg-gray-50 text-gray-500';
+      return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200';
   }
 }
 
@@ -136,9 +139,15 @@ export default function PatientDetailPage() {
 
   const fetchPatient = useCallback(async () => {
     setIsLoading(true);
-    const data = await PatientSupabaseService.getById(patientId);
-    setPatient(data);
-    setIsLoading(false);
+    try {
+      const data = await PatientSupabaseService.getById(patientId);
+      setPatient(data);
+    } catch (error) {
+      console.error('Erreur chargement patient:', error);
+      setPatient(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [patientId]);
 
   useEffect(() => {

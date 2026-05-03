@@ -29,12 +29,12 @@ const TABS: { key: TabKey; label: string; icon: React.ReactNode }[] = [
 ];
 
 const STATUT_CLS: Record<StatutFacture, string> = {
-  brouillon: 'bg-gray-100 text-gray-600',
-  emise: 'bg-blue-50 text-blue-700',
-  payee: 'bg-emerald-50 text-emerald-700',
-  partiellement_payee: 'bg-amber-50 text-amber-700',
-  annulee: 'bg-gray-50 text-gray-400',
-  impayee: 'bg-red-50 text-red-600',
+  brouillon: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+  emise: 'bg-blue-100 text-blue-800 ring-1 ring-blue-200',
+  payee: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200',
+  partiellement_payee: 'bg-amber-100 text-amber-800 ring-1 ring-amber-200',
+  annulee: 'bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200',
+  impayee: 'bg-rose-100 text-rose-800 ring-1 ring-rose-200',
 };
 
 const STATUT_LABEL: Record<StatutFacture, string> = {
@@ -84,17 +84,26 @@ export default function DossierMedicalPage() {
 
   const fetchAll = useCallback(async () => {
     setIsLoading(true);
-    const [p, c, f, o] = await Promise.all([
-      PatientSupabaseService.getById(patientId),
-      PatientSupabaseService.getConsultations(patientId),
-      PatientSupabaseService.getFactures(patientId),
-      PatientSupabaseService.getOrdonnances(patientId),
-    ]);
-    setPatient(p);
-    setConsultations(c);
-    setFactures(f);
-    setOrdonnances(o);
-    setIsLoading(false);
+    try {
+      const [p, c, f, o] = await Promise.all([
+        PatientSupabaseService.getById(patientId),
+        PatientSupabaseService.getConsultations(patientId),
+        PatientSupabaseService.getFactures(patientId),
+        PatientSupabaseService.getOrdonnances(patientId),
+      ]);
+      setPatient(p);
+      setConsultations(c);
+      setFactures(f);
+      setOrdonnances(o);
+    } catch (error) {
+      console.error('Erreur chargement dossier médical:', error);
+      setPatient(null);
+      setConsultations([]);
+      setFactures([]);
+      setOrdonnances([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [patientId]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);

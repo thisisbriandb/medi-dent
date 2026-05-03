@@ -10,18 +10,19 @@ import type {
 // ─── Helpers ───
 
 async function getUserEtablissement(): Promise<{ userId: string; etabId: string; tauxTva: number } | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  // getSession() = lecture locale non bloquante (cf. nav lock Supabase).
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
 
   const { data } = await supabase
     .from('profils')
     .select('id_etablissement, etablissement:etablissements ( taux_tva )')
-    .eq('id', user.id)
+    .eq('id', session.user.id)
     .maybeSingle();
 
   if (!data?.id_etablissement) return null;
   const tva = (data as any)?.etablissement?.taux_tva ?? 18;
-  return { userId: user.id, etabId: data.id_etablissement, tauxTva: tva };
+  return { userId: session.user.id, etabId: data.id_etablissement, tauxTva: tva };
 }
 
 async function generateNumeroFacture(idEtablissement: string): Promise<string> {

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import RdvService from '@/app/services/RdvService';
 import RdvFormDialog from '@/app/components/rdv/RdvFormDialog';
+import { useAuth } from '@/contexts/AuthContext';
 import type { RendezVous, StatutRdv } from '@/types/rdv.types';
 
 // ─── Helpers ───
@@ -64,6 +65,7 @@ function isToday(d: Date): boolean {
 // ─── Main Component ───
 
 export default function AppointmentsPage() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [view, setView] = useState<ViewMode>('semaine');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [rdvs, setRdvs] = useState<RendezVous[]>([]);
@@ -103,8 +105,13 @@ export default function AppointmentsPage() {
   }, [dateFrom, dateTo]);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
     fetchRdvs();
-  }, [fetchRdvs]);
+  }, [authLoading, isAuthenticated, fetchRdvs]);
 
   // Navigation
   const goToday = () => setCurrentDate(new Date());

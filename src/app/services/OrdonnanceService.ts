@@ -9,17 +9,18 @@ import type {
 // ─── Helpers ───
 
 async function getUserInfo(): Promise<{ userId: string; etabId: string } | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  // getSession() = lecture locale non bloquante (cf. nav lock Supabase).
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
 
   const { data } = await supabase
     .from('profils')
     .select('id_etablissement')
-    .eq('id', user.id)
+    .eq('id', session.user.id)
     .maybeSingle();
 
   if (!data?.id_etablissement) return null;
-  return { userId: user.id, etabId: data.id_etablissement };
+  return { userId: session.user.id, etabId: data.id_etablissement };
 }
 
 const ORDONNANCE_SELECT = `

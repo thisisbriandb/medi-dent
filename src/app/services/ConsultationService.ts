@@ -10,17 +10,19 @@ import type {
 // ─── Helpers ───
 
 async function getUserEtablissementAndId(): Promise<{ userId: string; etabId: string } | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  // getSession() = lecture locale (non bloquante), contrairement à getUser()
+  // qui fait un appel réseau pouvant rester pendant à cause du navigator lock.
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
 
   const { data } = await supabase
     .from('profils')
     .select('id_etablissement')
-    .eq('id', user.id)
+    .eq('id', session.user.id)
     .maybeSingle();
 
   if (!data?.id_etablissement) return null;
-  return { userId: user.id, etabId: data.id_etablissement };
+  return { userId: session.user.id, etabId: data.id_etablissement };
 }
 
 // ─── Select fragment for consultations with joins ───

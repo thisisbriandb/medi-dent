@@ -32,12 +32,12 @@ function todayRange(): { from: string; to: string } {
 }
 
 const RDV_STATUT_CLS: Record<StatutRdv, string> = {
-  planifie: 'bg-blue-50 text-blue-600',
-  confirme: 'bg-emerald-50 text-emerald-600',
-  en_cours: 'bg-amber-50 text-amber-700',
-  termine: 'bg-gray-100 text-gray-500',
-  annule: 'bg-red-50 text-red-500',
-  absent: 'bg-gray-100 text-gray-400',
+  planifie: 'bg-blue-100 text-blue-800 ring-1 ring-blue-200',
+  confirme: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200',
+  en_cours: 'bg-amber-100 text-amber-800 ring-1 ring-amber-200',
+  termine: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+  annule: 'bg-rose-100 text-rose-800 ring-1 ring-rose-200',
+  absent: 'bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200',
 };
 
 const RDV_STATUT_LABEL: Record<StatutRdv, string> = {
@@ -66,25 +66,34 @@ export default function DashboardPage() {
 
   const [data, setData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchDashboard = useCallback(async () => {
     setIsLoading(true);
-    const { from, to } = todayRange();
+    setLoadError(null);
+    try {
+      const { from, to } = todayRange();
 
-    const [rdvRes, consultRes, factStats, patientRes] = await Promise.all([
-      RdvService.getByDateRange(from, to),
-      ConsultationService.getAll({ page: 1, limit: 5 }),
-      FactureService.getStats(),
-      PatientSupabaseService.getAll({ page: 1, limit: 1 }),
-    ]);
+      const [rdvRes, consultRes, factStats, patientRes] = await Promise.all([
+        RdvService.getByDateRange(from, to),
+        ConsultationService.getAll({ page: 1, limit: 5 }),
+        FactureService.getStats(),
+        PatientSupabaseService.getAll({ page: 1, limit: 1 }),
+      ]);
 
-    setData({
-      rdvAujourdhui: rdvRes,
-      dernieresConsultations: consultRes.data,
-      factureStats: factStats,
-      nbPatients: patientRes.total,
-    });
-    setIsLoading(false);
+      setData({
+        rdvAujourdhui: rdvRes,
+        dernieresConsultations: consultRes.data,
+        factureStats: factStats,
+        nbPatients: patientRes.total,
+      });
+    } catch (error) {
+      console.error('Erreur chargement dashboard:', error);
+      setData(null);
+      setLoadError('Impossible de charger le dashboard.');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -153,9 +162,19 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {isLoading || !data ? (
+      {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600" />
+        </div>
+      ) : loadError || !data ? (
+        <div className="text-center py-20 bg-white rounded-xl border border-gray-100">
+          <p className="text-sm text-gray-500 mb-3">{loadError || 'Données indisponibles.'}</p>
+          <button
+            onClick={fetchDashboard}
+            className="px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            Réessayer
+          </button>
         </div>
       ) : (
         <>

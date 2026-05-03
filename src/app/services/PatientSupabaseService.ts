@@ -12,13 +12,16 @@ import type {
 // ─── Helpers ───
 
 async function getUserEtablissement(): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  // IMPORTANT: on utilise getSession() (lecture locale) et pas getUser()
+  // car getUser() fait un appel réseau qui peut rester pendant
+  // à cause du navigator lock lors des navigations rapides.
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return null;
 
   const { data } = await supabase
     .from('profils')
     .select('id_etablissement')
-    .eq('id', user.id)
+    .eq('id', session.user.id)
     .maybeSingle();
 
   return data?.id_etablissement ?? null;

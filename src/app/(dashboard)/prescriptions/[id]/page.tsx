@@ -22,9 +22,15 @@ export default function OrdonnanceDetailPage() {
 
   const fetchData = useCallback(async () => {
     setIsLoading(true);
-    const data = await OrdonnanceService.getById(ordonnanceId);
-    setOrdonnance(data);
-    setIsLoading(false);
+    try {
+      const data = await OrdonnanceService.getById(ordonnanceId);
+      setOrdonnance(data);
+    } catch (error) {
+      console.error('Erreur chargement ordonnance:', error);
+      setOrdonnance(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [ordonnanceId]);
 
   useEffect(() => { fetchData(); }, [fetchData]);

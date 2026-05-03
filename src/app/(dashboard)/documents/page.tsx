@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, FolderOpen, Calendar, ChevronRight } from 'lucide-react';
 import PatientSupabaseService from '@/app/services/PatientSupabaseService';
 import { formatDate } from '@/lib/format';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Patient, PatientFilters } from '@/types/patient.types';
 
 const LIMIT = 20;
 
 export default function DossiersMedicauxPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,15 +20,34 @@ export default function DossiersMedicauxPage() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const res = await PatientSupabaseService.getAll(filters);
-    setPatients(res.data);
-    setTotal(res.total);
-    setIsLoading(false);
-  }, [filters]);
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const res = await PatientSupabaseService.getAll(filters);
+        if (cancelled) return;
+        setPatients(res.data);
+        setTotal(res.total);
+      } catch (error) {
+        console.error('Erreur chargement dossiers médicaux:', error);
+        if (cancelled) return;
+        setPatients([]);
+        setTotal(0);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    void load();
+    return () => { cancelled = true; };
+  }, [authLoading, isAuthenticated, filters]);
 
   function calculateAge(dateNaissance: string | null): string {
     if (!dateNaissance) return '';

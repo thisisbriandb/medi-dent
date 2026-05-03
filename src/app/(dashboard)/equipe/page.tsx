@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEtablissement } from '@/hooks/useEtablissement';
 import InvitationService, { type Invitation } from '@/app/services/InvitationService';
@@ -37,7 +38,8 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function EquipePage() {
-  const { profil } = useAuth();
+  const router = useRouter();
+  const { profil, isAuthenticated, isLoading: authLoading } = useAuth();
   const etab = useEtablissement();
   const isAdmin = profil?.role === 'medecin_chef' || profil?.role === 'admin';
 
@@ -54,7 +56,12 @@ export default function EquipePage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
-    if (!etab?.id) return;
+    if (!etab?.id) {
+      setMembers([]);
+      setInvitations([]);
+      setLoadingMembers(false);
+      return;
+    }
     setLoadingMembers(true);
     try {
       const [{ data: membersData }, invData] = await Promise.all([
@@ -71,6 +78,20 @@ export default function EquipePage() {
   }, [etab?.id]);
 
   useEffect(() => { loadData(); }, [loadData]);
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.replace('/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600" />
+      </div>
+    );
+  }
 
   const handleCreateInvitation = async () => {
     if (!etab?.id) return;

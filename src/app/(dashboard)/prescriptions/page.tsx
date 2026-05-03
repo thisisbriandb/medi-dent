@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Plus, ChevronLeft, ChevronRight, FileText } from 'lucide-react';
 import OrdonnanceService from '@/app/services/OrdonnanceService';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Ordonnance, OrdonnanceFilters } from '@/types/ordonnance.types';
 
 const LIMIT = 20;
@@ -15,6 +16,7 @@ function formatDate(d: string | null | undefined) {
 
 export default function PrescriptionsPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [ordonnances, setOrdonnances] = useState<Ordonnance[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,20 +24,29 @@ export default function PrescriptionsPage() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result = await OrdonnanceService.getAll(filters);
-      setOrdonnances(result.data);
-      setTotal(result.total);
-    } catch (err) {
-      console.error('Erreur chargement ordonnances:', err);
-    } finally {
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) {
       setIsLoading(false);
+      return;
     }
-  }, [filters]);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const result = await OrdonnanceService.getAll(filters);
+        if (cancelled) return;
+        setOrdonnances(result.data);
+        setTotal(result.total);
+      } catch (err) {
+        console.error('Erreur chargement ordonnances:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [authLoading, isAuthenticated, filters]);
 
   return (
     <div className="space-y-6">

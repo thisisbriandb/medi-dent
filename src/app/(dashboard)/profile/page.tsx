@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   User,
   Building2,
@@ -48,14 +49,43 @@ const DEVISES = [
 ];
 
 export default function ProfilePage() {
-  const { profil, refreshProfil } = useAuth();
+  const router = useRouter();
+  const { profil, refreshProfil, isAuthenticated, isLoading: authLoading } = useAuth();
   const etab = useEtablissement();
   const [activeTab, setActiveTab] = useState<TabKey>('praticien');
 
-  if (!profil) {
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-sm text-gray-500">Session expirée. Veuillez vous reconnecter.</p>
+        <button
+          onClick={() => router.push('/login')}
+          className="mt-4 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+        >
+          Aller à la connexion
+        </button>
+      </div>
+    );
+  }
+
+  if (!profil) {
+    return (
+      <div className="text-center py-20">
+        <p className="text-sm text-gray-500">Profil indisponible pour le moment.</p>
+        <button
+          onClick={() => router.push('/dashboard')}
+          className="mt-4 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors"
+        >
+          Retour au dashboard
+        </button>
       </div>
     );
   }

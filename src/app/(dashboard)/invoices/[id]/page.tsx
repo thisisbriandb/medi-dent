@@ -12,12 +12,12 @@ import { printDocument } from '@/lib/printDocument';
 import type { Facture, StatutFacture } from '@/types/facture.types';
 
 const STATUT_BADGE: Record<StatutFacture, { label: string; cls: string }> = {
-  brouillon: { label: 'Brouillon', cls: 'bg-gray-100 text-gray-600' },
-  emise: { label: 'Émise', cls: 'bg-blue-100 text-blue-700' },
-  payee: { label: 'Payée', cls: 'bg-emerald-100 text-emerald-700' },
-  partiellement_payee: { label: 'Partiellement payée', cls: 'bg-amber-100 text-amber-700' },
-  annulee: { label: 'Annulée', cls: 'bg-gray-100 text-gray-400' },
-  impayee: { label: 'Impayée', cls: 'bg-red-100 text-red-700' },
+  brouillon: { label: 'Brouillon', cls: 'bg-slate-100 text-slate-700 ring-1 ring-slate-200' },
+  emise: { label: 'Émise', cls: 'bg-blue-100 text-blue-800 ring-1 ring-blue-200' },
+  payee: { label: 'Payée', cls: 'bg-emerald-100 text-emerald-800 ring-1 ring-emerald-200' },
+  partiellement_payee: { label: 'Partiellement payée', cls: 'bg-amber-100 text-amber-800 ring-1 ring-amber-200' },
+  annulee: { label: 'Annulée', cls: 'bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200' },
+  impayee: { label: 'Impayée', cls: 'bg-rose-100 text-rose-800 ring-1 ring-rose-200' },
 };
 
 export default function FactureDetailPage() {
@@ -40,9 +40,15 @@ export default function FactureDetailPage() {
 
   const fetchFacture = useCallback(async () => {
     setIsLoading(true);
-    const data = await FactureService.getById(factureId);
-    setFacture(data);
-    setIsLoading(false);
+    try {
+      const data = await FactureService.getById(factureId);
+      setFacture(data);
+    } catch (error) {
+      console.error('Erreur chargement facture:', error);
+      setFacture(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, [factureId]);
 
   useEffect(() => { fetchFacture(); }, [fetchFacture]);

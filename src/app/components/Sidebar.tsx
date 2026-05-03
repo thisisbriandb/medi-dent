@@ -100,18 +100,18 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
 
   return (
     <aside
-      className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 z-30 transition-all duration-300 ${
-        collapsed ? 'w-20' : 'w-64'
+      className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 shadow-sm z-30 transition-all duration-300 flex flex-col ${
+        collapsed ? 'w-16' : 'w-56'
       }`}
     >
-      <div className="flex items-center justify-between px-4 py-5 border-b border-gray-200">
-        <div className={`relative transition-all duration-300 ${collapsed ? 'w-10 h-10 mx-auto' : 'w-20 h-20'}`}>
+      <div className="flex items-center justify-between px-3 py-4 border-b border-gray-200">
+        <div className={`relative transition-all duration-300 ${collapsed ? 'w-9 h-9 mx-auto' : 'w-14 h-14'}`}>
           <Image src="/logo.png" alt="Logo AllôDocta" fill className="object-contain" />
         </div>
         {!collapsed && (
           <button
             onClick={onToggle}
-            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600"
+            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
             title="Réduire le menu"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -120,10 +120,10 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
       </div>
 
       {collapsed && (
-        <div className="flex justify-center py-3 border-b border-gray-200">
+        <div className="flex justify-center py-2 border-b border-gray-200">
           <button
             onClick={onToggle}
-            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-400 hover:text-gray-600"
+            className="p-1.5 hover:bg-gray-100 rounded-lg text-gray-500 hover:text-gray-700 transition-colors"
             title="Ouvrir le menu"
           >
             <ChevronRight className="w-4 h-4" />
@@ -131,11 +131,11 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
         </div>
       )}
 
-      <nav className={`p-4 overflow-y-auto h-[calc(100vh-6rem)] ${collapsed ? 'px-2' : ''}`}>
+      <nav className={`flex-1 min-h-0 overflow-y-auto p-3 ${collapsed ? 'px-2' : ''}`}>
         {menuItems.map((section, idx) => (
-          <div key={idx} className="mb-6">
+          <div key={idx} className="mb-4">
             {!collapsed && (
-              <h2 className="text-xs font-semibold text-gray-400 mb-4 px-4">
+              <h2 className="text-xs font-semibold tracking-[0.08em] text-gray-500 mb-3 px-3">
                 {section.title}
               </h2>
             )}
@@ -146,11 +146,12 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
                   <li key={itemIdx}>
                     <Link
                       href={item.href}
+                      prefetch={false}
                       title={collapsed ? item.label : undefined}
-                      className={`flex items-center gap-3 px-4 py-2 rounded-lg text-sm transition-all duration-200 ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
                         isActive
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:bg-gray-50'
+                          ? 'bg-blue-100 text-blue-700 font-semibold shadow-sm'
+                          : 'text-gray-700 hover:bg-gray-100'
                       } ${collapsed ? 'justify-center px-2' : ''}`}
                     >
                       {item.icon}

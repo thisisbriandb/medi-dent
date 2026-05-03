@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Plus, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import ConsultationService from '@/app/services/ConsultationService';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Consultation, ConsultationFilters } from '@/types/consultation.types';
 
 const LIMIT = 20;
@@ -21,6 +22,7 @@ function formatDateTime(dateStr: string | null | undefined) {
 
 export default function ConsultationPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,22 +34,29 @@ export default function ConsultationPage() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result = await ConsultationService.getAll(filters);
-      setConsultations(result.data);
-      setTotal(result.total);
-    } catch (err) {
-      console.error('Erreur chargement consultations:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters]);
-
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const result = await ConsultationService.getAll(filters);
+        if (cancelled) return;
+        setConsultations(result.data);
+        setTotal(result.total);
+      } catch (err) {
+        console.error('Erreur chargement consultations:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [authLoading, isAuthenticated, filters]);
 
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value, page: 1 }));

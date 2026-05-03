@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Plus, ChevronLeft, ChevronRight, Filter, UserCheck, UserX } from 'lucide-react';
 import PatientSupabaseService from '@/app/services/PatientSupabaseService';
+import { useAuth } from '@/contexts/AuthContext';
 import type { Patient, PatientFilters } from '@/types/patient.types';
 
 const LIMIT = 20;
 
 export default function PatientsPage() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,22 +24,29 @@ export default function PatientsPage() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
-  const fetchPatients = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const result = await PatientSupabaseService.getAll(filters);
-      setPatients(result.data);
-      setTotal(result.total);
-    } catch (err) {
-      console.error('Erreur chargement patients:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters]);
-
   useEffect(() => {
-    fetchPatients();
-  }, [fetchPatients]);
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      setIsLoading(true);
+      try {
+        const result = await PatientSupabaseService.getAll(filters);
+        if (cancelled) return;
+        setPatients(result.data);
+        setTotal(result.total);
+      } catch (err) {
+        console.error('Erreur chargement patients:', err);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+    void load();
+    return () => { cancelled = true; };
+  }, [authLoading, isAuthenticated, filters]);
 
   const handleSearch = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value, page: 1 }));
@@ -66,7 +75,7 @@ export default function PatientsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Patients</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-600 mt-1">
             {total} patient{total !== 1 ? 's' : ''} enregistré{total !== 1 ? 's' : ''}
           </p>
         </div>
@@ -80,7 +89,7 @@ export default function PatientsPage() {
       </div>
 
       {/* Filtres */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div className="flex flex-col sm:flex-row gap-3">
           {/* Recherche */}
           <div className="relative flex-1">
@@ -99,9 +108,9 @@ export default function PatientsPage() {
             <Filter className="w-4 h-4 text-gray-400" />
             <button
               onClick={() => handleFilterActif(undefined)}
-              className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+              className={`px-3 py-2 text-sm rounded-lg transition-colors font-medium ${
                 filters.est_actif === undefined
-                  ? 'bg-gray-900 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -109,9 +118,9 @@ export default function PatientsPage() {
             </button>
             <button
               onClick={() => handleFilterActif(true)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors font-medium ${
                 filters.est_actif === true
-                  ? 'bg-gray-900 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -120,9 +129,9 @@ export default function PatientsPage() {
             </button>
             <button
               onClick={() => handleFilterActif(false)}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors ${
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg transition-colors font-medium ${
                 filters.est_actif === false
-                  ? 'bg-gray-900 text-white'
+                  ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
@@ -134,7 +143,7 @@ export default function PatientsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600" />
@@ -147,19 +156,19 @@ export default function PatientsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">
                   N° Dossier
                 </th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">
                   Patient
                 </th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4 hidden md:table-cell">
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4 hidden md:table-cell">
                   Téléphone
                 </th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4 hidden lg:table-cell">
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4 hidden lg:table-cell">
                   Dernière visite
                 </th>
-                <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-4">
                   Statut
                 </th>
               </tr>
@@ -169,10 +178,10 @@ export default function PatientsPage() {
                 <tr
                   key={patient.id}
                   onClick={() => router.push(`/patients/${patient.id}`)}
-                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="hover:bg-blue-50/40 cursor-pointer transition-colors"
                 >
                   <td className="px-6 py-4">
-                    <span className="text-sm font-mono text-gray-500">
+                    <span className="text-sm font-mono text-gray-700">
                       {patient.numero_dossier}
                     </span>
                   </td>
@@ -188,7 +197,7 @@ export default function PatientsPage() {
                           {patient.prenom} {patient.nom}
                         </p>
                         {patient.email && (
-                          <p className="text-xs text-gray-400">{patient.email}</p>
+                          <p className="text-xs text-gray-500">{patient.email}</p>
                         )}
                       </div>
                     </div>
@@ -207,8 +216,8 @@ export default function PatientsPage() {
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                         patient.est_actif
-                          ? 'bg-gray-100 text-gray-700'
-                          : 'bg-gray-50 text-gray-400'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-amber-100 text-amber-800'
                       }`}
                     >
                       {patient.est_actif ? 'Actif' : 'Inactif'}
