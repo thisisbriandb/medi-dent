@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { profil: p } = await AuthService.login(credentials);
       setProfil(p);
       setIsAuthenticated(true);
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error) {
       skipNextAuthEvent.current = false;
       console.error('Échec de la connexion', error);
@@ -133,7 +133,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { profil: p } = await AuthService.register(data);
       setProfil(p);
       setIsAuthenticated(true);
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error) {
       skipNextAuthEvent.current = false;
       console.error("Échec de l'inscription", error);
@@ -150,7 +150,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { profil: p } = await AuthService.registerWithEtablissement(data);
       setProfil(p);
       setIsAuthenticated(true);
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error) {
       skipNextAuthEvent.current = false;
       console.error("Échec de l'inscription établissement", error);
@@ -167,7 +167,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       const { profil: p } = await AuthService.registerWithInvitation(data);
       setProfil(p);
       setIsAuthenticated(true);
-      router.push('/dashboard');
+      window.location.href = '/dashboard';
     } catch (error) {
       skipNextAuthEvent.current = false;
       console.error("Échec de l'inscription par invitation", error);
@@ -184,7 +184,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       await AuthService.logout();
       setProfil(null);
       setIsAuthenticated(false);
-      router.push('/login');
+      window.location.href = '/login';
     } catch (error) {
       skipNextAuthEvent.current = false;
       console.error('Échec de la déconnexion', error);

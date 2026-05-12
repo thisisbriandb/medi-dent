@@ -25,7 +25,6 @@ export default function LoginPage() {
       await login(formData);
     } catch (err: any) {
       setError(err.message || 'Identifiants incorrects');
-    } finally {
       setLoading(false);
     }
   };
