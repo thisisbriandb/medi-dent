@@ -4,6 +4,7 @@ import "./clash-display.css";
 import "flatpickr/dist/themes/light.css"
 import "flatpickr/dist/flatpickr.css"
 import { AuthProvider } from '@/contexts/AuthContext';
+import { QueryProvider } from '@/providers/QueryProvider';
 import { Inter } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,10 +22,11 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <AuthProvider>
-          {children}
-      
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

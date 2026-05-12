@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEtablissement } from '@/hooks/useEtablissement';
 import InvitationService, { type Invitation } from '@/app/services/InvitationService';
@@ -42,42 +43,33 @@ export default function EquipePage() {
   const { profil, isAuthenticated, isLoading: authLoading } = useAuth();
   const etab = useEtablissement();
   const isAdmin = profil?.role === 'medecin_chef' || profil?.role === 'admin';
-
-  const [members, setMembers] = useState<Profil[]>([]);
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
-  const [loadingMembers, setLoadingMembers] = useState(true);
+  const queryClient = useQueryClient();
 
   // New invitation form
   const [showInviteForm, setShowInviteForm] = useState(false);
   const [inviteRole, setInviteRole] = useState('praticien');
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteDays, setInviteDays] = useState(7);
-  const [creating, setCreating] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    if (!etab?.id) {
-      setMembers([]);
-      setInvitations([]);
-      setLoadingMembers(false);
-      return;
-    }
-    setLoadingMembers(true);
-    try {
+  const { data, isLoading: loadingMembers } = useQuery({
+    queryKey: ['equipe', etab?.id],
+    queryFn: async () => {
+      if (!etab?.id) return { members: [], invitations: [] };
       const [{ data: membersData }, invData] = await Promise.all([
         supabase.from('profils').select('*').eq('id_etablissement', etab.id).order('role').order('nom'),
         InvitationService.getByEtablissement(etab.id),
       ]);
-      setMembers((membersData ?? []) as unknown as Profil[]);
-      setInvitations(invData);
-    } catch (err) {
-      console.error('Erreur chargement équipe:', err);
-    } finally {
-      setLoadingMembers(false);
-    }
-  }, [etab?.id]);
+      return {
+        members: (membersData ?? []) as unknown as Profil[],
+        invitations: invData,
+      };
+    },
+    enabled: !!etab?.id,
+  });
 
-  useEffect(() => { loadData(); }, [loadData]);
+  const members = data?.members ?? [];
+  const invitations = data?.invitations ?? [];
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -93,25 +85,31 @@ export default function EquipePage() {
     );
   }
 
-  const handleCreateInvitation = async () => {
-    if (!etab?.id) return;
-    setCreating(true);
-    try {
-      await InvitationService.create({
-        id_etablissement: etab.id,
-        role: inviteRole,
-        email_invite: inviteEmail || undefined,
-        expire_days: inviteDays,
-      });
+  const createInvitationMutation = useMutation({
+    mutationFn: async (newInv: any) => {
+      return await InvitationService.create(newInv);
+    },
+    onSuccess: () => {
       setShowInviteForm(false);
       setInviteEmail('');
-      loadData();
-    } catch (err: any) {
+      queryClient.invalidateQueries({ queryKey: ['equipe', etab?.id] });
+    },
+    onError: (err: any) => {
       console.error('Erreur création invitation:', err.message);
-    } finally {
-      setCreating(false);
     }
+  });
+
+  const handleCreateInvitation = () => {
+    if (!etab?.id) return;
+    createInvitationMutation.mutate({
+      id_etablissement: etab.id,
+      role: inviteRole,
+      email_invite: inviteEmail || undefined,
+      expire_days: inviteDays,
+    });
   };
+
+  const creating = createInvitationMutation.isPending;
 
   const handleCopyCode = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -119,13 +117,20 @@ export default function EquipePage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const handleRevoke = async (id: string) => {
-    try {
-      await InvitationService.revoke(id);
-      loadData();
-    } catch (err: any) {
+  const revokeMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await InvitationService.revoke(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['equipe', etab?.id] });
+    },
+    onError: (err: any) => {
       console.error('Erreur suppression:', err.message);
     }
+  });
+
+  const handleRevoke = (id: string) => {
+    revokeMutation.mutate(id);
   };
 
   const activeInvitations = invitations.filter((i) => !i.utilise && new Date(i.expire_at) > new Date());

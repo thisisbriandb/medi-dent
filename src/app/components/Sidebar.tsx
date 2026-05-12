@@ -43,11 +43,6 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
           label: 'Agenda',
           icon: <Calendar className="w-5 h-5" />,
           href: '/appointments'
-        },
-        {
-          label: 'Profil',
-          icon: <UserCircle className="w-5 h-5" />,
-          href: '/profile'
         }
       ]
     },
@@ -164,6 +159,29 @@ const Sidebar = ({ collapsed, onToggle }: SidebarProps) => {
           </div>
         ))}
       </nav>
+
+      <div className={`p-3 border-t border-gray-200 mt-auto ${collapsed ? 'px-2' : ''}`}>
+        <Link
+          href="/profile"
+          prefetch={false}
+          title={collapsed ? "Profil" : undefined}
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 ${
+            pathname === '/profile'
+              ? 'bg-blue-100 text-blue-700 font-semibold shadow-sm'
+              : 'text-gray-700 hover:bg-gray-100'
+          } ${collapsed ? 'justify-center px-2' : ''}`}
+        >
+          <UserCircle className="w-5 h-5" />
+          {!collapsed && (
+            <div className="flex flex-col overflow-hidden">
+              <span className="whitespace-nowrap font-medium text-gray-900">Mon Profil</span>
+              {profil?.nom && (
+                <span className="text-xs text-gray-500 truncate">{profil.prenom} {profil.nom}</span>
+              )}
+            </div>
+          )}
+        </Link>
+      </div>
     </aside>
   );
 };
