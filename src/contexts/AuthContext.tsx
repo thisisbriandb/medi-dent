@@ -109,19 +109,24 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // ─── Actions ───
 
   const login = async (credentials: LoginCredentials) => {
+    console.log('[DEBUG] AuthContext.login() START');
     setIsLoading(true);
     try {
+      console.log('[DEBUG] AuthContext.login() - calling AuthService.login...');
       // Signal au listener de ne pas refaire un getProfil concurrent
       skipNextAuthEvent.current = true;
       const { profil: p } = await AuthService.login(credentials);
+      console.log('[DEBUG] AuthContext.login() - success, profil:', !!p);
       setProfil(p);
       setIsAuthenticated(true);
+      console.log('[DEBUG] AuthContext.login() - Redirecting to /dashboard');
       window.location.href = '/dashboard';
     } catch (error) {
       skipNextAuthEvent.current = false;
-      console.error('Échec de la connexion', error);
+      console.error('[DEBUG] AuthContext.login() - CATCH ERROR:', error);
       throw error;
     } finally {
+      console.log('[DEBUG] AuthContext.login() - FINALLY executed');
       setIsLoading(false);
     }
   };
@@ -178,18 +183,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = async () => {
+    console.log('[DEBUG] AuthContext.logout() START');
     setIsLoading(true);
     try {
+      console.log('[DEBUG] AuthContext.logout() - calling AuthService.logout...');
       skipNextAuthEvent.current = true;
       await AuthService.logout();
+      console.log('[DEBUG] AuthContext.logout() - success');
       setProfil(null);
       setIsAuthenticated(false);
+      console.log('[DEBUG] AuthContext.logout() - Redirecting to /login');
       window.location.href = '/login';
     } catch (error) {
       skipNextAuthEvent.current = false;
-      console.error('Échec de la déconnexion', error);
+      console.error('[DEBUG] AuthContext.logout() - CATCH ERROR:', error);
       throw error;
     } finally {
+      console.log('[DEBUG] AuthContext.logout() - FINALLY executed');
       setIsLoading(false);
     }
   };

@@ -125,26 +125,31 @@ const AuthService = {
   // ─── Login ───
 
   async login(credentials: LoginCredentials): Promise<{ profil: Profil }> {
+    console.log('[DEBUG] AuthService.login() - start signInWithPassword...');
     const { data, error } = await supabase.auth.signInWithPassword({
       email: credentials.email,
       password: credentials.password,
     });
+    console.log('[DEBUG] AuthService.login() - signInWithPassword returned', { hasData: !!data?.user, error });
 
     if (error) {
       throw new Error(error.message);
     }
 
+    console.log('[DEBUG] AuthService.login() - fetching profil...');
     const profil = await this.getProfil(data.user.id);
+    console.log('[DEBUG] AuthService.login() - profil returned', !!profil);
     if (!profil) {
       throw new Error('Profil utilisateur introuvable. Contactez l\'administrateur.');
     }
 
-    // Mise à jour dernière connexion
+    console.log('[DEBUG] AuthService.login() - updating derniere_connexion...');
     await supabase
       .from('profils')
       .update({ derniere_connexion: new Date().toISOString() })
       .eq('id', data.user.id);
 
+    console.log('[DEBUG] AuthService.login() - returning profil');
     return { profil };
   },
 

@@ -18,12 +18,16 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[DEBUG] LoginPage.handleSubmit() START');
     setError(null);
     setLoading(true);
 
     try {
+      console.log('[DEBUG] LoginPage - about to await login()');
       await login(formData);
+      console.log('[DEBUG] LoginPage - login() finished successfully');
     } catch (err: any) {
+      console.error('[DEBUG] LoginPage - login() caught error:', err);
       setError(err.message || 'Identifiants incorrects');
       setLoading(false);
     }
