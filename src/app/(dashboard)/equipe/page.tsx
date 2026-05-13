@@ -138,7 +138,7 @@ export default function EquipePage() {
 
   return (
     <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Équipe</h1>
           <p className="text-sm text-gray-500 mt-1">
@@ -148,7 +148,7 @@ export default function EquipePage() {
         {isAdmin && (
           <button
             onClick={() => setShowInviteForm(!showInviteForm)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
           >
             <UserPlus className="w-4 h-4" />
             Inviter
@@ -198,8 +198,8 @@ export default function EquipePage() {
           <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">Invitations en cours</h2>
           <div className="space-y-3">
             {activeInvitations.map((inv) => (
-              <div key={inv.id} className="flex items-center justify-between px-4 py-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3">
+              <div key={inv.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-3 bg-gray-50 rounded-lg">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <span className="font-mono text-sm font-bold text-gray-800 bg-white px-3 py-1 rounded border border-gray-200">{inv.code}</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${ROLE_COLORS[inv.role] || 'bg-gray-100 text-gray-600'}`}>
                     {ROLE_LABELS[inv.role] || inv.role}
@@ -237,7 +237,8 @@ export default function EquipePage() {
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600" />
           </div>
         ) : (
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[500px]">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-3">Membre</th>
@@ -279,6 +280,7 @@ export default function EquipePage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

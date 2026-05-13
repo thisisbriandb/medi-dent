@@ -132,26 +132,26 @@ export default function DashboardPage() {
           </p>
         </div>
         {data && (
-          <div className="flex items-center gap-5 text-sm">
+          <div className="flex flex-wrap items-center gap-3 sm:gap-5 text-sm">
             <button onClick={() => router.push('/patients')} className="flex items-center gap-1.5 hover:text-blue-600 transition-colors">
               <Users className="w-4 h-4 text-blue-400" />
               <span className="font-bold text-gray-800">{data.nbPatients}</span>
-              <span className="text-gray-400">patients</span>
+              <span className="text-gray-400 hidden sm:inline">patients</span>
             </button>
-            <div className="w-px h-4 bg-gray-200" />
+            <div className="w-px h-4 bg-gray-200 hidden sm:block" />
             <button onClick={() => router.push('/appointments')} className="flex items-center gap-1.5 hover:text-purple-600 transition-colors">
               <Calendar className="w-4 h-4 text-purple-400" />
               <span className="font-bold text-gray-800">{rdvActifs.length}</span>
               <span className="text-gray-400">RDV</span>
             </button>
-            <div className="w-px h-4 bg-gray-200" />
+            <div className="w-px h-4 bg-gray-200 hidden sm:block" />
             <button onClick={() => router.push('/invoices')} className="flex items-center gap-1.5 hover:text-emerald-600 transition-colors">
               <Wallet className="w-4 h-4 text-emerald-400" />
               <span className="font-bold text-gray-800">{formatMoney(data.factureStats.totalPaye, devise)}</span>
             </button>
             {data.factureStats.totalImpaye > 0 && (
               <>
-                <div className="w-px h-4 bg-gray-200" />
+                <div className="w-px h-4 bg-gray-200 hidden sm:block" />
                 <button onClick={() => router.push('/invoices')} className="flex items-center gap-1.5 hover:text-red-600 transition-colors">
                   <TrendingDown className="w-4 h-4 text-red-400" />
                   <span className="font-bold text-red-600">{formatMoney(data.factureStats.totalImpaye, devise)}</span>
@@ -200,7 +200,7 @@ export default function DashboardPage() {
 
             {/* RDV du jour — zone principale */}
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-100">
                 <h2 className="text-sm font-semibold text-gray-900">Rendez-vous du jour</h2>
                 <button
                   onClick={() => router.push('/appointments')}
@@ -222,7 +222,7 @@ export default function DashboardPage() {
                     return (
                       <div
                         key={rdv.id}
-                        className={`flex items-center justify-between px-6 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${isPast ? 'opacity-50' : ''}`}
+                        className={`flex items-center justify-between px-4 sm:px-6 py-3 hover:bg-gray-50 transition-colors cursor-pointer ${isPast ? 'opacity-50' : ''}`}
                         onClick={() => router.push('/appointments')}
                       >
                         <div className="flex items-center gap-3">
@@ -256,7 +256,7 @@ export default function DashboardPage() {
 
             {/* Dernières consultations — zone secondaire */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+              <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-gray-100">
                 <h2 className="text-sm font-semibold text-gray-900">Consultations</h2>
                 <button
                   onClick={() => router.push('/consultation')}
@@ -276,7 +276,7 @@ export default function DashboardPage() {
                   {data.dernieresConsultations.map((c) => (
                     <div
                       key={c.id}
-                      className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="flex items-center gap-3 px-4 sm:px-5 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
                       onClick={() => router.push(`/consultation/${c.id}`)}
                     >
                       <div className="min-w-0 flex-1">

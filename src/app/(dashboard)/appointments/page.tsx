@@ -67,7 +67,20 @@ function isToday(d: Date): boolean {
 export default function AppointmentsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [view, setView] = useState<ViewMode>('semaine');
+  const [isMobile, setIsMobile] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mq.matches);
+    if (mq.matches) setView('jour');
+    const handler = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
+      if (e.matches) setView('jour');
+    };
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
   const [rdvs, setRdvs] = useState<RendezVous[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -178,16 +191,16 @@ export default function AppointmentsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Agenda</h1>
           <p className="text-sm text-gray-500 mt-1">
-            {todayRdvCount} rendez-vous aujourd'hui
+            {todayRdvCount} rendez-vous aujourd&apos;hui
           </p>
         </div>
         <button
           onClick={handleNewRdv}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
           Nouveau RDV
@@ -195,29 +208,31 @@ export default function AppointmentsPage() {
       </div>
 
       {/* Controls */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={goPrev}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ChevronLeft className="w-4 h-4 text-gray-600" />
-          </button>
-          <button
-            onClick={goToday}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            Aujourd'hui
-          </button>
-          <button
-            onClick={goNext}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <ChevronRight className="w-4 h-4 text-gray-600" />
-          </button>
-          <span className="text-sm font-medium text-gray-800 ml-2 capitalize">{headerLabel}</span>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 px-3 sm:px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex items-center justify-between sm:justify-start gap-2">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={goPrev}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-600" />
+            </button>
+            <button
+              onClick={goToday}
+              className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Aujourd&apos;hui
+            </button>
+            <button
+              onClick={goNext}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <ChevronRight className="w-4 h-4 text-gray-600" />
+            </button>
+          </div>
+          <span className="text-sm font-medium text-gray-800 capitalize truncate">{headerLabel}</span>
         </div>
-        <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
+        <div className="hidden md:flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setView('jour')}
             className={`px-3 py-1.5 text-sm rounded-md transition-colors ${view === 'jour' ? 'bg-white shadow-sm text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-700'}`}
@@ -239,7 +254,7 @@ export default function AppointmentsPage() {
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-2 border-gray-300 border-t-blue-600" />
           </div>
-        ) : view === 'semaine' ? (
+        ) : view === 'semaine' && !isMobile ? (
           <WeekView
             days={weekDays}
             rdvs={rdvs}

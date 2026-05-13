@@ -64,14 +64,14 @@ export default function InvoicesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Facturation</h1>
           <p className="text-sm text-gray-500 mt-1">{stats.nbFactures} facture{stats.nbFactures !== 1 ? 's' : ''}</p>
         </div>
         <button
           onClick={() => router.push('/invoices/nouvelle')}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
           Nouvelle facture
@@ -143,7 +143,8 @@ export default function InvoicesPage() {
             <p className="text-gray-400 text-sm">Aucune facture trouvée</p>
           </div>
         ) : (
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider px-6 py-4">N°</th>
@@ -191,10 +192,11 @@ export default function InvoicesPage() {
               })}
             </tbody>
           </table>
+          </div>
         )}
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-t border-gray-100">
             <p className="text-sm text-gray-500">Page {filters.page} sur {totalPages}</p>
             <div className="flex items-center gap-2">
               <button onClick={() => setFilters((p) => ({ ...p, page: (p.page ?? 1) - 1 }))} disabled={(filters.page ?? 1) <= 1} className="p-2 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"><ChevronLeft className="w-4 h-4" /></button>

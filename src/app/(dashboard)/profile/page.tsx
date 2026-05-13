@@ -95,10 +95,10 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* Header card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex items-center gap-5">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+        <div className="flex items-center gap-4 sm:gap-5">
           <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-50 flex items-center justify-center overflow-hidden">
               {profil.photo_url ? (
                 <img src={profil.photo_url} alt="" className="w-full h-full object-cover" />
               ) : (
@@ -107,7 +107,7 @@ export default function ProfilePage() {
             </div>
           </div>
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Dr. {profil.prenom} {profil.nom}</h1>
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900">Dr. {profil.prenom} {profil.nom}</h1>
             <p className="text-sm text-gray-500">{ROLE_LABELS[profil.role] || profil.role} {profil.specialite && `— ${profil.specialite}`}</p>
             <p className="text-sm text-gray-400 mt-0.5">{etab?.nom || 'Aucun établissement'}</p>
           </div>

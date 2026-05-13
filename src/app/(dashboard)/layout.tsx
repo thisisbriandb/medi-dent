@@ -12,9 +12,15 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -32,9 +38,24 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(prev => !prev)} />
-      <Header sidebarCollapsed={sidebarCollapsed} />
-      <main className={`pt-20 px-4 pb-4 md:px-6 md:pb-6 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-56'}`}>
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed(prev => !prev)}
+        mobileOpen={mobileOpen}
+        onMobileClose={() => setMobileOpen(false)}
+      />
+      <Header
+        sidebarCollapsed={sidebarCollapsed}
+        onMobileMenuToggle={() => setMobileOpen(prev => !prev)}
+      />
+      <main className={`pt-20 px-3 pb-4 sm:px-4 md:px-6 md:pb-6 transition-all duration-300 ${sidebarCollapsed ? 'md:ml-16' : 'md:ml-56'}`}>
         <div key={pathname} className="max-w-7xl mx-auto">
           {children}
         </div>

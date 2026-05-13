@@ -253,25 +253,25 @@ export default function PatientDetailPage() {
   return (
     <div className="space-y-6">
       {/* Back + Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex items-start gap-3 sm:gap-4">
           <button
             onClick={() => router.push('/patients')}
-            className="mt-1 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="mt-1 p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
           >
             <ArrowLeft className="w-5 h-5 text-gray-500" />
           </button>
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-              <span className="text-lg font-semibold text-gray-600">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-11 h-11 sm:w-14 sm:h-14 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+              <span className="text-base sm:text-lg font-semibold text-gray-600">
                 {patient.prenom?.[0]}{patient.nom?.[0]}
               </span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
                 {patient.prenom} {patient.nom}
               </h1>
-              <div className="flex items-center gap-3 mt-1">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1">
                 <span className="text-sm text-gray-400 font-mono">{patient.numero_dossier}</span>
                 {age && <span className="text-sm text-gray-500">{age}</span>}
                 {patient.sexe && (
@@ -292,7 +292,7 @@ export default function PatientDetailPage() {
         </div>
         <button
           onClick={() => setEditOpen(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto"
         >
           <Edit3 className="w-4 h-4" />
           Modifier
@@ -300,7 +300,7 @@ export default function PatientDetailPage() {
       </div>
 
       {/* Quick info cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
         {patient.telephone && (
           <div className="flex items-center gap-3 bg-white rounded-xl border border-gray-100 px-5 py-4">
             <Phone className="w-4 h-4 text-gray-400" />
@@ -342,7 +342,7 @@ export default function PatientDetailPage() {
         </div>
 
         {/* Tab content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {tabLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-blue-600" />
@@ -476,15 +476,16 @@ function TabFactures({ data }: { data: FactureRow[] }) {
   }
 
   return (
-    <table className="w-full">
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
+    <table className="w-full min-w-[500px]">
       <thead>
         <tr className="border-b border-gray-100">
-          <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-3">Numéro</th>
+          <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-3 pl-4 sm:pl-0">Numéro</th>
           <th className="text-left text-xs font-medium text-gray-400 uppercase tracking-wider pb-3">Date</th>
           <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider pb-3">Total TTC</th>
           <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider pb-3">Payé</th>
           <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider pb-3">Reste</th>
-          <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider pb-3">Statut</th>
+          <th className="text-right text-xs font-medium text-gray-400 uppercase tracking-wider pb-3 pr-4 sm:pr-0">Statut</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-50">
@@ -504,6 +505,7 @@ function TabFactures({ data }: { data: FactureRow[] }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 

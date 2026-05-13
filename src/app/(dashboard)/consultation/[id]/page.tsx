@@ -130,16 +130,16 @@ export default function ConsultationDetailPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="flex items-start gap-3 sm:gap-4">
           <button
             onClick={() => router.push('/consultation')}
-            className="mt-1 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="mt-1 p-2 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
           >
             <ArrowLeft className="w-5 h-5 text-gray-500" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
               Consultation
             </h1>
             <div className="flex items-center gap-3 mt-1">
@@ -153,16 +153,16 @@ export default function ConsultationDetailPage() {
         {!isEditing ? (
           <button
             onClick={() => setIsEditing(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors w-full sm:w-auto"
           >
             <Edit3 className="w-4 h-4" />
             Modifier
           </button>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               onClick={handleCancel}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors flex-1 sm:flex-initial"
             >
               <X className="w-4 h-4" />
               Annuler
@@ -170,7 +170,7 @@ export default function ConsultationDetailPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors flex-1 sm:flex-initial"
             >
               <Save className="w-4 h-4" />
               {saving ? 'Sauvegarde...' : 'Sauvegarder'}
@@ -184,7 +184,7 @@ export default function ConsultationDetailPage() {
       )}
 
       {/* Patient info card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <User className="w-4 h-4 text-gray-400" />
           <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Patient</h2>
@@ -220,7 +220,7 @@ export default function ConsultationDetailPage() {
       </div>
 
       {/* Consultation details */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
         <div className="flex items-center gap-2 mb-4">
           <ClipboardList className="w-4 h-4 text-gray-400" />
           <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Détails</h2>
@@ -289,7 +289,7 @@ export default function ConsultationDetailPage() {
 
       {/* IA report */}
       {consultation.compte_rendu_ia && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <FileText className="w-4 h-4 text-gray-400" />
             <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">

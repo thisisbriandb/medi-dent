@@ -99,7 +99,7 @@ export default function DossiersMedicauxPage() {
             <button
               key={p.id}
               onClick={() => router.push(`/documents/${p.id}`)}
-              className="w-full flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors text-left"
+              className="w-full flex items-center justify-between px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="w-11 h-11 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -120,9 +120,9 @@ export default function DossiersMedicauxPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                 {p.derniere_visite && (
-                  <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                  <div className="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{formatDate(p.derniere_visite)}</span>
                   </div>

@@ -8,7 +8,8 @@ import AuthService, {
   InvitationRegisterData,
   Profil 
 } from '@/app/services/AuthService';
-import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   profil: Profil | null;
@@ -34,6 +35,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   // Ref pour éviter que le listener onAuthStateChange fasse des appels
   // concurrents quand login()/register() gèrent déjà le profil.
@@ -80,6 +82,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         if (event === 'SIGNED_OUT') {
           setProfil(null);
           setIsAuthenticated(false);
+          // Redirection fiable vers login
+          window.location.href = '/login';
+          return;
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
           // Pas besoin de re-fetch le profil lors du refresh token
         } else if (event === 'SIGNED_IN' && session?.user) {
@@ -105,6 +110,64 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       subscription.unsubscribe();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Refresh proactif de la session ───
+  // Quand l'onglet redevient visible après une période d'inactivité,
+  // on force un refresh du token pour éviter les requêtes avec un JWT expiré.
+  useEffect(() => {
+    let lastHidden = 0;
+
+    const handleVisibility = async () => {
+      if (document.visibilityState === 'hidden') {
+        lastHidden = Date.now();
+        return;
+      }
+      // Ne rafraîchir que si l'onglet était caché > 30s et qu'on est authentifié
+      if (!isAuthenticated || Date.now() - lastHidden < 30_000) return;
+
+      try {
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          console.warn('Session expirée, redirection login:', error.message);
+          setProfil(null);
+          setIsAuthenticated(false);
+          window.location.href = '/login';
+        }
+      } catch {
+        // Erreur réseau, on ignore
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [isAuthenticated]);
+
+  // Quand le pathname change (navigation sidebar), on tente un refresh
+  // léger pour s'assurer que le token est frais avant les appels data.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const refreshIfNeeded = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          setProfil(null);
+          setIsAuthenticated(false);
+          window.location.href = '/login';
+          return;
+        }
+        // Si le token expire dans moins de 60s, forcer un refresh
+        const expiresAt = session.expires_at ?? 0;
+        if (expiresAt * 1000 - Date.now() < 60_000) {
+          await supabase.auth.refreshSession();
+        }
+      } catch {
+        // Erreur réseau, les appels data gèreront l'erreur
+      }
+    };
+
+    refreshIfNeeded();
+  }, [pathname, isAuthenticated]);
 
   // ─── Actions ───
 
@@ -183,24 +246,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = async () => {
-    console.log('[DEBUG] AuthContext.logout() START');
-    setIsLoading(true);
     try {
-      console.log('[DEBUG] AuthContext.logout() - calling AuthService.logout...');
       skipNextAuthEvent.current = true;
       await AuthService.logout();
-      console.log('[DEBUG] AuthContext.logout() - success');
       setProfil(null);
       setIsAuthenticated(false);
-      console.log('[DEBUG] AuthContext.logout() - Redirecting to /login');
       window.location.href = '/login';
     } catch (error) {
       skipNextAuthEvent.current = false;
-      console.error('[DEBUG] AuthContext.logout() - CATCH ERROR:', error);
-      throw error;
-    } finally {
-      console.log('[DEBUG] AuthContext.logout() - FINALLY executed');
-      setIsLoading(false);
+      console.error('Erreur déconnexion:', error);
     }
   };
 
