@@ -9,7 +9,7 @@ import AuthService, {
   Profil 
 } from '@/app/services/AuthService';
 import { supabase } from '@/lib/supabase';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   profil: Profil | null;
@@ -35,7 +35,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const router = useRouter();
-  const pathname = usePathname();
 
   // Ref pour éviter que le listener onAuthStateChange fasse des appels
   // concurrents quand login()/register() gèrent déjà le profil.
@@ -142,55 +141,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [isAuthenticated]);
 
-  // Quand le pathname change (navigation sidebar), on tente un refresh
-  // léger pour s'assurer que le token est frais avant les appels data.
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const refreshIfNeeded = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          setProfil(null);
-          setIsAuthenticated(false);
-          window.location.href = '/login';
-          return;
-        }
-        // Si le token expire dans moins de 60s, forcer un refresh
-        const expiresAt = session.expires_at ?? 0;
-        if (expiresAt * 1000 - Date.now() < 60_000) {
-          await supabase.auth.refreshSession();
-        }
-      } catch {
-        // Erreur réseau, les appels data gèreront l'erreur
-      }
-    };
-
-    refreshIfNeeded();
-  }, [pathname, isAuthenticated]);
-
   // ─── Actions ───
 
   const login = async (credentials: LoginCredentials) => {
-    console.log('[DEBUG] AuthContext.login() START');
     setIsLoading(true);
     try {
-      console.log('[DEBUG] AuthContext.login() - calling AuthService.login...');
       // Signal au listener de ne pas refaire un getProfil concurrent
       skipNextAuthEvent.current = true;
       const { profil: p } = await AuthService.login(credentials);
-      console.log('[DEBUG] AuthContext.login() - success, profil:', !!p);
       setProfil(p);
       setIsAuthenticated(true);
-      console.log('[DEBUG] AuthContext.login() - Redirecting to /dashboard');
-      window.location.href = '/dashboard';
+      setIsLoading(false);
+      // Navigation client-side : pas de rechargement complet
+      router.push('/dashboard');
     } catch (error) {
       skipNextAuthEvent.current = false;
-      console.error('[DEBUG] AuthContext.login() - CATCH ERROR:', error);
-      throw error;
-    } finally {
-      console.log('[DEBUG] AuthContext.login() - FINALLY executed');
       setIsLoading(false);
+      throw error;
     }
   };
 

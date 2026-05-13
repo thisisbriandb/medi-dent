@@ -3,44 +3,29 @@ import { createBrowserClient } from '@supabase/ssr';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-// Lock avec timeout pour éviter que navigator.locks bloque indéfiniment
-// lors du refresh de token après une longue inactivité / mise en veille
-const LOCK_TIMEOUT = 5000;
+// ─── In-memory lock (remplace navigator.locks) ───
+// navigator.locks peut bloquer indéfiniment après mise en veille / inactivité.
+// On utilise une simple file d'attente par nom, sans coordination inter-onglets.
+// Le pire cas (deux onglets refreshent en parallèle) est géré par Supabase.
+const _locks = new Map<string, Promise<void>>();
 
-function lockWithTimeout<R>(
+function inMemoryLock<R>(
   name: string,
-  acquireTimeout: number,
+  _acquireTimeout: number,
   fn: () => Promise<R>,
 ): Promise<R> {
-  if (typeof navigator === 'undefined' || !navigator.locks) {
-    // Pas de navigator.locks (SSR / vieux navigateur) → exécuter directement
-    return fn();
-  }
+  const prev = _locks.get(name) ?? Promise.resolve();
+  let release: () => void;
+  const next = new Promise<void>((res) => { release = res; });
+  _locks.set(name, next);
 
-  return new Promise<R>((resolve, reject) => {
-    const ac = new AbortController();
-
-    const timer = setTimeout(() => {
-      // Annuler la requête de lock en attente
-      ac.abort();
-      // Exécuter sans lock plutôt que bloquer
-      console.warn(`[supabase] Lock "${name}" timeout after ${acquireTimeout}ms, proceeding without lock`);
-      fn().then(resolve).catch(reject);
-    }, acquireTimeout);
-
-    navigator.locks
-      .request(name, { signal: ac.signal }, async () => {
-        clearTimeout(timer);
-        return fn();
-      })
-      .then(resolve)
-      .catch((err) => {
-        clearTimeout(timer);
-        // Ignorer l'erreur d'abort (le timeout a déjà pris le relais)
-        if (err?.name === 'AbortError') return;
-        reject(err);
-      });
-  });
+  return prev
+    .catch(() => {})              // ignorer l'erreur du précédent
+    .then(() => fn())             // exécuter la section critique
+    .finally(() => {
+      release!();
+      if (_locks.get(name) === next) _locks.delete(name);
+    });
 }
 
 // Singleton : un seul client navigateur pour éviter les conflits de lock
@@ -66,8 +51,8 @@ export const supabase = (() => {
         auth: {
           autoRefreshToken: true,
           persistSession: true,
-          lock: <R>(name: string, _acquireTimeout: number, fn: () => Promise<R>) =>
-            lockWithTimeout(name, LOCK_TIMEOUT, fn),
+          lock: <R>(name: string, acquireTimeout: number, fn: () => Promise<R>) =>
+            inMemoryLock(name, acquireTimeout, fn),
         },
       });
     }
