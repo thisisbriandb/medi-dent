@@ -31,6 +31,35 @@ function inMemoryLock<R>(
 // Singleton : un seul client navigateur pour éviter les conflits de lock
 let _supabase: ReturnType<typeof createBrowserClient> | null = null;
 
+// ─── Session helper ───
+// getSession() retourne la session cachée SANS rafraîchir le token.
+// Après une longue inactivité le JWT peut être expiré et toutes les requêtes
+// Supabase échouent silencieusement (RLS → résultat vide).
+// Cette fonction vérifie l'expiration et rafraîchit si nécessaire.
+const REFRESH_MARGIN_MS = 60_000; // rafraîchir si expire dans < 60 s
+
+export async function getValidSession() {
+  const { data: { session } } = await _getSupabase().auth.getSession();
+  if (!session) return null;
+
+  const expiresAt = (session.expires_at ?? 0) * 1000;
+  if (expiresAt - Date.now() < REFRESH_MARGIN_MS) {
+    const { data, error } = await _getSupabase().auth.refreshSession();
+    if (error || !data.session) {
+      // Refresh token expiré → session morte
+      return null;
+    }
+    return data.session;
+  }
+
+  return session;
+}
+
+// Fonction interne pour accéder au singleton avant qu'il ne soit exporté
+function _getSupabase() {
+  return supabase;
+}
+
 export const supabase = (() => {
   if (!_supabase) {
     // Si les variables manquent, on log un warning au lieu de throw,

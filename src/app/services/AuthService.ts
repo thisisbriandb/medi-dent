@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getValidSession } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 
 // ─── Types ───
@@ -78,12 +78,12 @@ const AuthService = {
   // ─── Session ───
 
   async getSession() {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) {
-      console.error('Erreur récupération session:', error.message);
+    try {
+      return await getValidSession();
+    } catch (error: any) {
+      console.error('Erreur récupération session:', error?.message);
       return null;
     }
-    return session;
   },
 
   async getSupabaseUser(): Promise<SupabaseUser | null> {

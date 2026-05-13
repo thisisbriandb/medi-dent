@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getValidSession } from '@/lib/supabase';
 import type {
   Patient,
   PatientInsert,
@@ -12,10 +12,7 @@ import type {
 // ─── Helpers ───
 
 async function getUserEtablissement(): Promise<string | null> {
-  // IMPORTANT: on utilise getSession() (lecture locale) et pas getUser()
-  // car getUser() fait un appel réseau qui peut rester pendant
-  // à cause du navigator lock lors des navigations rapides.
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getValidSession();
   if (!session?.user) return null;
 
   const { data } = await supabase

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getValidSession } from '@/lib/supabase';
 
 export interface Invitation {
   id: string;
@@ -33,7 +33,7 @@ const InvitationService = {
     const expireAt = new Date();
     expireAt.setDate(expireAt.getDate() + (params.expire_days || 7));
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await getValidSession();
     if (!session?.user) throw new Error('Non authentifié');
 
     const { data, error } = await supabase

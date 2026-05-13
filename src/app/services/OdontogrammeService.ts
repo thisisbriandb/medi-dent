@@ -1,11 +1,10 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getValidSession } from '@/lib/supabase';
 import type { Odontogramme, OdontogrammeData } from '@/types/odontogramme.types';
 
 // ─── Helpers ───
 
 async function getUserInfo(): Promise<{ userId: string; idEtablissement: string } | null> {
-  // getSession() = lecture locale non bloquante (cf. nav lock Supabase).
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getValidSession();
   if (!session?.user) return null;
 
   const { data } = await supabase

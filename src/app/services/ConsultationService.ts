@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { supabase, getValidSession } from '@/lib/supabase';
 import type {
   Consultation,
   ConsultationInsert,
@@ -10,9 +10,7 @@ import type {
 // ─── Helpers ───
 
 async function getUserEtablissementAndId(): Promise<{ userId: string; etabId: string } | null> {
-  // getSession() = lecture locale (non bloquante), contrairement à getUser()
-  // qui fait un appel réseau pouvant rester pendant à cause du navigator lock.
-  const { data: { session } } = await supabase.auth.getSession();
+  const session = await getValidSession();
   if (!session?.user) return null;
 
   const { data } = await supabase
